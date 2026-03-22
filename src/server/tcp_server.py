@@ -1,5 +1,6 @@
 import socket
 import json
+import sys
 
 STATUS_TEXT = {
     200: "OK",
@@ -35,8 +36,10 @@ print("Server is listening on port 8080...")
 
 
 while True:
+
+  conn = None
   try:
-    
+
     conn, addr = server.accept()
     print(f"Connection from {addr}")
 
@@ -56,7 +59,7 @@ while True:
 
   except Exception as e:
     print(f"[ERROR]: {e}", file=sys.stderr)
-    
+
   finally:
     conn.close()  
 
