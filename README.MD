@@ -33,10 +33,10 @@ cloudmind/
 ├── src/
 │   └── server/
 │       ├── tcp_server.py    # Main HTTP server
-│       └── request.py        # HTTP request parser
+│       └── request.py       # HTTP request parser
 ├── tests/
 │   └── test_request.py      # Unit tests for Request class
-├── requirements.txt          # Python dependencies
+├── requirements.txt         # Python dependencies
 └── README.MD                # Project documentation
 ```
 
