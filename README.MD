@@ -67,18 +67,6 @@ python3 src/server/tcp_server.py
 curl http://localhost:8080<ROUTE>
 ```
 
-**Example requests:**
-```bash
-# Get welcome message
-curl http://localhost:8080/
-
-# Check server health
-curl http://localhost:8080/health
-
-# Test 404 response
-curl http://localhost:8080/xyz
-```
-
 **Routes:**
 
 | Route | Description | Status Code |
