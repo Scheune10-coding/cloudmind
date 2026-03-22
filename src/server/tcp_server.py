@@ -33,7 +33,10 @@ server.listen(5)
 
 print("Server is listening on port 8080...")
 
+
 while True:
+  try:
+    
     conn, addr = server.accept()
     print(f"Connection from {addr}")
 
@@ -50,5 +53,10 @@ while True:
     response = f"HTTP/1.1 {status_code} {status_text}\r\nContent-Type: application/json\r\nContent-Length: {len(body)}\r\n\r\n{body}"
 
     conn.sendall(response.encode('utf-8'))
-    conn.close()
+
+  except Exception as e:
+    print(f"[ERROR]: {e}", file=sys.stderr)
+    
+  finally:
+    conn.close()  
 
