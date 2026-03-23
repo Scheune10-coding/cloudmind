@@ -32,7 +32,7 @@ pip3 install -r requirements.txt
 cloudmind/
 ├── src/
 │   └── server/
-│       ├── tcp_server.py    # Main HTTP server
+│       ├── tcp_server.py    # Main HTTP server (DEPRECATED)
 │       ├── response.py      # HTTP response parser
 │       ├── request.py       # HTTP request parser
 │       └── router.py        # router-class
