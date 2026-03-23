@@ -34,7 +34,8 @@ cloudmind/
 │   └── server/
 │       ├── tcp_server.py    # Main HTTP server
 │       ├── response.py      # HTTP response parser
-│       └── request.py       # HTTP request parser
+│       ├── request.py       # HTTP request parser
+│       └── router.py        # router-class
 ├── tests/
 │   ├── test_response.py     # Unit tests for Response class
 │   └── test_request.py      # Unit tests for Request class
