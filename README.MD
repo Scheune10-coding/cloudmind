@@ -33,8 +33,10 @@ cloudmind/
 ├── src/
 │   └── server/
 │       ├── tcp_server.py    # Main HTTP server
+│       ├── response.py      # HTTP response parser
 │       └── request.py       # HTTP request parser
 ├── tests/
+│   ├── test_response.py     # Unit tests for Response class
 │   └── test_request.py      # Unit tests for Request class
 ├── requirements.txt         # Python dependencies
 └── README.MD                # Project documentation
@@ -48,7 +50,7 @@ cloudmind/
 - HTTP/1.1 protocol support
 - JSON response handling
 - Route matching with pattern matching
-- Request parsing (method, path, headers, body, query params)
+- Request and response parsing (method, path, headers, body, query params)
 - Error handling with proper status codes
 - Unit tests with pytest
 
@@ -89,6 +91,12 @@ python3 -m pytest tests/ -v
 
 ```bash
 python3 -m pytest tests/test_request.py -v
+```
+
+### Response-Class tests
+
+```bash
+python3 -m pytest tests/test_response.py -v
 ```
 
 ---
