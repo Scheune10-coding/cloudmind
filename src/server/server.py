@@ -14,8 +14,12 @@ def health_handler(request: Request) -> Response:
 def home_handler(request: Request) -> Response:
     return Response.ok({"message": "Willkommen bei CloudMind"})
 
+def echo_handler(request: Request) -> Response:
+    return Response.ok(request.json) if request.json else Response.bad_request({"error": "Invalid JSON body"})
+
 router.add("GET", "/health", health_handler)
 router.add("GET", "/", home_handler)
+router.add("POST", "/echo", echo_handler)
 
 def handle_connection(conn, addr):
   print(f"Connection from {addr}")
@@ -26,7 +30,7 @@ def handle_connection(conn, addr):
     conn.sendall(response.to_bytes())
   except Exception as e:
     print(f"[ERROR]: {e}", file=sys.stderr)
-    conn.sendall(Response.error(str(e)))
+    conn.sendall((Response.error(str(e))).to_bytes())
   finally:
     conn.close()
 
