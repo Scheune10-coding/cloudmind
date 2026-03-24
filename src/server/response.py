@@ -16,14 +16,18 @@ STATUS = {
 }
 
 class Response:
-  def __init__ (self, status: int, body: dict):
+  def __init__ (self, status: int, body: dict, headers: dict = None):
     self.status = status
     self.body = body
+    self.extra_headers = headers or {}
 
   def to_bytes (self) -> bytes:
     body_bytes = json.dumps(self.body).encode('utf-8')
     status_line = f'HTTP/1.1 {self.status} {STATUS[self.status]}\r\n'
-    headers = f'Content-Type: application/json\r\nContent-Length: {len(body_bytes)}\r\n\r\n'
+    headers = f'Content-Type: application/json\r\nContent-Length: {len(body_bytes)}\r\n'
+    if self.extra_headers:
+      headers += ''.join(f'{key}: {value}\r\n' for key, value in self.extra_headers.items())
+    headers += '\r\n'
     return (status_line + headers).encode('utf-8') + body_bytes
   
   @classmethod
@@ -36,8 +40,12 @@ class Response:
 
   @classmethod
   def not_found (cls, body: dict) -> 'Response':
-    return cls(404, body)
+    return cls(404, body)  
   
+  @classmethod
+  def method_not_allowed (cls, body, allowed_methods) -> 'Response':
+    return cls(405, body, {"Allow": ", ".join(allowed_methods)})
+
   @classmethod
   def error (cls, message: str) -> 'Response':
     return cls(500, {"error": message})
