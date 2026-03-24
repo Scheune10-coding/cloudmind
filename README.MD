@@ -37,9 +37,12 @@ cloudmind/
 │       ├── request.py       # HTTP request parser
 │       ├── router.py        # Router-class
 │       └── server.py        # Main HTTP server
+│ 
 ├── tests/
 │   ├── test_response.py     # Unit tests for Response class
-│   └── test_request.py      # Unit tests for Request class
+│   ├── test_request.py      # Unit tests for Response class
+│   └── test_router.py       # Unit tests for Router class
+│ 
 ├── requirements.txt         # Python dependencies
 └── README.MD                # Project documentation
 ```
@@ -100,6 +103,12 @@ python3 -m pytest tests/test_request.py -v
 
 ```bash
 python3 -m pytest tests/test_response.py -v
+```
+
+### Router-Class tests
+
+```bash
+python3 -m pytest tests/test_router.py -v
 ```
 
 ---
