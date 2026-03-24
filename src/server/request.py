@@ -23,7 +23,10 @@ class Request:
     
     # Parse the body
     self.body: str = self.raw.split('\r\n\r\n', 1)[1] if '\r\n\r\n' in self.raw else ''
-    self.json = json.loads(self.body) if self.headers.get('Content-Type') == 'application/json' else None
+    try:
+        self.json = json.loads(self.body) if self.headers.get('Content-Type') == 'application/json' else None
+    except json.JSONDecodeError:
+        self.json = None
 
   def __repr__(self):
     return f"REQUEST({self.method} {self.path})"
