@@ -24,12 +24,18 @@ def test_body_empty_on_get():
   r = Request(raw)
   assert r.body == ""
 
-def test_body_on_post():
-  raw = "POST /echo HTTP/1.1\r\nContent-Type: application/json\r\n\r\n{\"key\": \"value\"}"
-  r = Request(raw)
-  assert r.body == '{"key": "value"}'
-
 def test_repr():
   raw = "GET /health HTTP/1.1\r\n\r\n"
   r = Request(raw)
   assert repr(r) == "REQUEST(GET /health)"
+
+def test_json_body():
+  raw = "POST /echo HTTP/1.1\r\nContent-Type: application/json\r\n\r\n{\"key\": \"value\"}"
+  raw2 = "POST /echo HTTP/1.1\r\nContent-Type: application/json\r\n\r\nTest"
+  raw3 = "POST /echo HTTP/1.1\r\nContent-Type: text/plain\r\n\r\n{\"key\": \"value\"}"
+  r = Request(raw)
+  r2 = Request(raw2)
+  r3 = Request(raw3)
+  assert r.json == {"key": "value"}
+  assert r2.json == None
+  assert r3.json == None
