@@ -68,7 +68,7 @@ python3 src/server/tcp_server.py
 
 ### 2. Make request
 ```bash
-curl http://localhost:8080<ROUTE>
+curl -X <METHOD> http://localhost:8080<ROUTE>
 ```
 
 **Routes:**
