@@ -31,6 +31,10 @@ class Response:
     return cls(200, body)
   
   @classmethod
+  def bad_request (cls, body: dict) -> 'Response':
+    return cls(400, body)
+
+  @classmethod
   def not_found (cls, body: dict) -> 'Response':
     return cls(404, body)
   
