@@ -33,3 +33,7 @@ class Response:
   @classmethod
   def not_found (cls, body: dict) -> 'Response':
     return cls(404, body)
+  
+  @classmethod
+  def error (cls, message: str) -> 'Response':
+    return cls(500, {"error": message})
