@@ -73,11 +73,12 @@ curl http://localhost:8080<ROUTE>
 
 **Routes:**
 
-| Route | Description | Status Code |
-|-------|-------------|-------------|
-| `/` | Main route - Welcome message | 200 |
-| `/health` | Health check endpoint | 200 |
-| `/*` | All other routes - Not Found | 404 |
+| Route | Description | Status Code | Method |
+|-------|-------------|-------------|--------|
+| `/` | Main route - Welcome message | 200 | GET |
+| `/health` | Health check endpoint | 200 | GET |
+| `/echo` | Echo endpoint - Returns JSON body | 200 | POST |
+| `/*` | All other routes - Not Found | 404 | * |
 
 ---
 
