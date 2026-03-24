@@ -34,7 +34,6 @@ Start the server and try example requests immediately.
 
 ```bash
 python3 src/server/server.py
-# (or python3 src/server/tcp_server.py for the deprecated single-threaded example)
 ```
 
 ### Example requests
