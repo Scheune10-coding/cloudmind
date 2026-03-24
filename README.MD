@@ -26,6 +26,33 @@ pip3 install -r requirements.txt
 ```
 
 ---
+## Quick start
+
+Start the server and try example requests immediately.
+
+### Start the server
+
+```bash
+python3 src/server/server.py
+# (or python3 src/server/tcp_server.py for the deprecated single-threaded example)
+```
+
+### Example requests
+
+```bash
+# 1) Get welcome message (GET /)
+curl http://localhost:8080/
+
+# 2) Check server health (GET /health)
+curl http://localhost:8080/health
+
+# 3) Echo JSON body (POST /echo)
+curl -X POST http://localhost:8080/echo \
+  -H "Content-Type: application/json" \
+  -d '{"message": "hello"}'
+```
+
+---
 ## Project Structure
 
 ```
@@ -40,7 +67,7 @@ cloudmind/
 │ 
 ├── tests/
 │   ├── test_response.py     # Unit tests for Response class
-│   ├── test_request.py      # Unit tests for Response class
+│   ├── test_request.py      # Unit tests for Request class
 │   └── test_router.py       # Unit tests for Router class
 │ 
 ├── requirements.txt         # Python dependencies
@@ -48,7 +75,6 @@ cloudmind/
 ```
 
 ---
-
 ## Features
 
 - Custom TCP socket server
@@ -60,19 +86,9 @@ cloudmind/
 - Unit tests with pytest
 
 ---
-
 ## How to use the server
 
-### 1. Start the server
-
-```bash
-python3 src/server/tcp_server.py
-```
-
-### 2. Make request
-```bash
-curl -X <METHOD> http://localhost:8080<ROUTE>
-```
+Start the server (see Quick start above) and make requests to the endpoints listed below.
 
 **Routes:**
 
@@ -84,7 +100,6 @@ curl -X <METHOD> http://localhost:8080<ROUTE>
 | `/*` | All other routes - Not Found | 404 | * |
 
 ---
-
 ## Running Tests
 
 ### All tests
@@ -112,14 +127,12 @@ python3 -m pytest tests/test_router.py -v
 ```
 
 ---
-
 ## Requirements
 
 - Python 3.10+ (uses match/case syntax)
 - pytest for running tests
 
 ---
-
 ## License
 
 This project is open source and available for educational purposes.
