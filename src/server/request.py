@@ -11,6 +11,7 @@ class Request:
     # Parse the query parameters
     raw_path = self.path
     self.path = raw_path.split('?')[0]
+    self.path_params: dict = {}
     self.query_params = urllib.parse.parse_qs(raw_path.split('?')[1]) if '?' in raw_path else {}
     
     # Parse the headers

@@ -18,7 +18,7 @@ STATUS = {
 class Response:
   def __init__ (self, status: int, body: dict, headers: dict = None):
     self.status = status
-    self.body = body
+    self.body = body or {}
     self.extra_headers = headers or {}
 
   def to_bytes (self) -> bytes:
@@ -33,6 +33,10 @@ class Response:
   @classmethod
   def ok (cls, body: dict) -> 'Response':
     return cls(200, body)
+  
+  @classmethod
+  def created (cls, body: dict) -> 'Response':
+    return cls(201, body)
   
   @classmethod
   def bad_request (cls, body: dict) -> 'Response':
