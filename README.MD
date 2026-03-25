@@ -57,6 +57,9 @@ curl -X POST http://localhost:8080/echo \
 ```
 cloudmind/
 ├── src/
+│   ├── db/
+│   │   └── database.py      # Database class
+│   │  
 │   └── server/
 │       ├── tcp_server.py    # HTTP server (DEPRECATED)
 │       ├── response.py      # HTTP response parser
