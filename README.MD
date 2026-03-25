@@ -49,6 +49,17 @@ curl http://localhost:8080/health
 curl -X POST http://localhost:8080/echo \
   -H "Content-Type: application/json" \
   -d '{"message": "hello"}'
+
+# 4) Create a user (POST /users)
+curl -X POST http://localhost:8080/users \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Alice"}'
+
+# 5) Get all users (GET /users)
+curl http://localhost:8080/users
+
+# 6) Get specific user by ID (GET /users/{id})
+curl http://localhost:8080/users/1
 ```
 
 ---
@@ -58,7 +69,7 @@ curl -X POST http://localhost:8080/echo \
 cloudmind/
 ├── src/
 │   ├── db/
-│   │   └── database.py      # Database class
+│   │   └── database.py     # Database class
 │   │  
 │   └── server/
 │       ├── tcp_server.py    # HTTP server (DEPRECATED)
@@ -68,6 +79,7 @@ cloudmind/
 │       └── server.py        # Main HTTP server
 │ 
 ├── tests/
+│   ├── test_database.py     # Unit tests for database operations
 │   ├── test_response.py     # Unit tests for Response class
 │   ├── test_request.py      # Unit tests for Request class
 │   └── test_router.py       # Unit tests for Router class
@@ -99,10 +111,18 @@ Start the server (see Quick start above) and make requests to the endpoints list
 | `/` | Main route - Welcome message | 200 | GET |
 | `/health` | Health check endpoint | 200 | GET |
 | `/echo` | Echo endpoint - Returns JSON body | 200 | POST |
+| `/users` | Create a new user (expects JSON with 'name') | 201 | POST |
+| `/users` | Get a list of all users | 200 | GET |
+| `/users/{id}`| Get a specific user by ID | 200 / 404| GET |
 | `/*` | All other routes - Not Found | 404 | * |
 
 ---
 ## Running Tests
+
+> **Note:** Make sure your virtual environment is activated before running the tests so that `pytest` is available.
+> ```bash
+> source venv/bin/activate
+> ```
 
 ### All tests
 
@@ -126,6 +146,12 @@ python3 -m pytest tests/test_response.py -v
 
 ```bash
 python3 -m pytest tests/test_router.py -v
+```
+
+### Database operations tests
+
+```bash
+python3 -m pytest tests/test_database.py -v
 ```
 
 ---
