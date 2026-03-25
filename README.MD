@@ -60,6 +60,17 @@ curl http://localhost:8080/users
 
 # 6) Get specific user by ID (GET /users/{id})
 curl http://localhost:8080/users/1
+
+# 7) Create a session (POST /sessions)
+curl -X POST http://localhost:8080/sessions \
+  -H "Content-Type: application/json" \
+  -d '{"user_id": 1, "title": "Meine erste Session"}'
+
+# 8) Get all sessions correlated to a specific user (GET /users/{id}/sessions)
+curl http://localhost:8080/users/1/sessions
+
+# 9) Get specific session by ID correlated to a specific user (GET /users/{id}/sessions/{session_id})
+curl http://localhost:8080/users/1/sessions/1
 ```
 
 ---
@@ -69,9 +80,13 @@ curl http://localhost:8080/users/1
 cloudmind/
 ├── src/
 │   ├── db/
-│   │   └── database.py     # Database class
+│   │   └── database.py      # Database class
 │   │  
 │   └── server/
+│       ├── controller/
+│       │   ├── session.py   # Session controller
+│       │   └── user.py      # User controller
+│       │ 
 │       ├── tcp_server.py    # HTTP server (DEPRECATED)
 │       ├── response.py      # HTTP response parser
 │       ├── request.py       # HTTP request parser
@@ -114,7 +129,10 @@ Start the server (see Quick start above) and make requests to the endpoints list
 | `/users` | Create a new user (expects JSON with 'name') | 201 | POST |
 | `/users` | Get a list of all users | 200 | GET |
 | `/users/{id}`| Get a specific user by ID | 200 / 404| GET |
-| `/*` | All other routes - Not Found | 404 | * |
+| `/sessions` | Create a new session (expects JSON with 'user_id' and 'title') | 201 | POST |
+| `/users/{id}/sessions` | Get a list of all sessions correlated to a specific user | 200 | GET |
+| `/users/{id}/sessions/{session_id}`| Get a specific session by ID correlated to a specific user | 200 / 404| GET |
+| `/xyz` | All other routes - Not Found | 404 | * |
 
 ---
 ## Running Tests
