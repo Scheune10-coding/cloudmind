@@ -47,3 +47,22 @@ class Database:
     cursor = self.connection.execute('SELECT * FROM users')
     rows = cursor.fetchall()
     return [dict(row) for row in rows]
+  
+  def create_session(self, user_id: int, title: str = None) -> dict:
+    get_user = self.get_user(user_id)
+    if not get_user:
+      raise ValueError()
+    
+    cursor = self.connection.execute('INSERT INTO sessions (user_id, title) VALUES (?, ?)', (user_id, title))
+    self.connection.commit()
+    return {"id": cursor.lastrowid}
+
+  def get_session(self, session_id: int, user_id: int) -> dict:
+    cursor = self.connection.execute('SELECT * FROM sessions WHERE id = ? AND user_id = ?', (session_id, user_id))
+    row = cursor.fetchone()
+    return dict(row) if row else None
+
+  def list_sessions(self, user_id: int) -> list:
+    cursor = self.connection.execute('SELECT * FROM sessions WHERE user_id = ?', (user_id,))
+    rows = cursor.fetchall()
+    return [dict(row) for row in rows]

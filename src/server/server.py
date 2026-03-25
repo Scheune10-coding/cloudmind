@@ -5,38 +5,36 @@ from src.server.request import Request
 from src.server.response import Response
 from src.server.router import Router
 from src.db.database import Database
+from src.server.controller.user import UserController
+from src.server.controller.session import SessionController
 
 # Router instanziieren und Routen registrieren
 router = Router()
 database = Database('data/cloudmind.db')
 
+
+user_controller = UserController(database)
+session_controller = SessionController(database)
+
 def health_handler(request: Request) -> Response:
-    return Response.ok({"status": "ok"})
+  return Response.ok({"status": "ok"})
 
 def home_handler(request: Request) -> Response:
-    return Response.ok({"message": "Willkommen bei CloudMind"})
+  return Response.ok({"message": "Willkommen bei CloudMind"})
 
 def echo_handler(request: Request) -> Response:
-    return Response.ok(request.json) if request.json else Response.bad_request({"error": "Invalid JSON body"})
+  return Response.ok(request.json) if request.json else Response.bad_request({"error": "Invalid JSON body"})
 
-def db_post_handler(request: Request) -> Response:
-    user_id = database.create_user(request.json['name'])
-    return Response.created({"id": user_id})
-
-def db_get_handler(request: Request) -> Response:
-    if 'id' in request.path_params:
-        user_id = request.path_params['id']
-        user = database.get_user(user_id)
-        return Response.ok(user) if user else Response.not_found({"error": "User not found"})
-    users = database.list_users()
-    return Response.ok(users) if users else Response.not_found({"error": "User not found"})
 
 router.add("GET", "/health", health_handler)
 router.add("GET", "/", home_handler)
 router.add("POST", "/echo", echo_handler)
-router.add("POST", "/users", db_post_handler)
-router.add("GET", "/users", db_get_handler)
-router.add("GET", "/users/{id}", db_get_handler)
+router.add("POST", "/users", user_controller.create)
+router.add("GET", "/users", user_controller.list)
+router.add("GET", "/users/{id}", user_controller.get)
+router.add("POST", "/sessions", session_controller.create)
+router.add("GET", "/users/{id}/sessions", session_controller.list)
+router.add("GET", "/users/{id}/sessions/{session_id}", session_controller.get)
 
 
 def handle_connection(conn, addr):
