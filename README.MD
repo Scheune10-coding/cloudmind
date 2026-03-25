@@ -109,10 +109,12 @@ cloudmind/
 - Custom TCP socket server
 - HTTP/1.1 protocol support
 - JSON response handling
-- Route matching with pattern matching
+- Dynamic route matching with path parameters ({id})
 - Request and response parsing (method, path, headers, body, query params)
 - Error handling with proper status codes
 - Unit tests with pytest
+- SQLite database integration
+- Controller pattern for route handlers
 
 ---
 ## How to use the server
