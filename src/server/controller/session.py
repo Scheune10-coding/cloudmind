@@ -22,9 +22,8 @@ class SessionController:
     return Response.created(session)
 
   def get(self, request: Request) -> Response:
-    session_id = request.path_params["session_id"]
-    user_id = request.path_params["id"]
-    session = self.database.get_session(session_id, user_id)
+    session_id = request.path_params["id"]
+    session = self.database.get_session(session_id)
     return Response.ok(session) if session else Response.not_found({"error": "Session not found"})
 
   def list(self, request: Request) -> Response:

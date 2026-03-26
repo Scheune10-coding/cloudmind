@@ -57,12 +57,24 @@ class Database:
     self.connection.commit()
     return {"id": cursor.lastrowid}
 
-  def get_session(self, session_id: int, user_id: int) -> dict:
-    cursor = self.connection.execute('SELECT * FROM sessions WHERE id = ? AND user_id = ?', (session_id, user_id))
+  def get_session(self, session_id: int) -> dict:
+    cursor = self.connection.execute('SELECT * FROM sessions WHERE id = ?', (session_id,))
     row = cursor.fetchone()
     return dict(row) if row else None
 
   def list_sessions(self, user_id: int) -> list:
     cursor = self.connection.execute('SELECT * FROM sessions WHERE user_id = ?', (user_id,))
+    rows = cursor.fetchall()
+    return [dict(row) for row in rows]
+  
+  def add_message(self, session_id: int, role: str, content: str) -> dict:
+    if role not in ['user', 'assistant']:
+      raise ValueError("Invalid role")
+    cursor = self.connection.execute('INSERT INTO messages (session_id, role, content) VALUES (?, ?, ?)', (session_id, role, content))
+    self.connection.commit()
+    return {"id": cursor.lastrowid}
+  
+  def get_messages(self, session_id: int) -> list:
+    cursor = self.connection.execute('SELECT * FROM messages WHERE session_id = ? ORDER BY created_at ASC', (session_id,))
     rows = cursor.fetchall()
     return [dict(row) for row in rows]
