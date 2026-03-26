@@ -18,7 +18,7 @@ STATUS = {
 class Response:
   def __init__ (self, status: int, body: dict, headers: dict = None):
     self.status = status
-    self.body = body or {}
+    self.body = body if body is not None else {}
     self.extra_headers = headers or {}
 
   def to_bytes (self) -> bytes:
