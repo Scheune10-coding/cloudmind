@@ -7,6 +7,7 @@ from src.server.router import Router
 from src.db.database import Database
 from src.server.controller.user import UserController
 from src.server.controller.session import SessionController
+from src.server.controller.message import MessageController
 
 # Router instanziieren und Routen registrieren
 router = Router()
@@ -15,6 +16,7 @@ database = Database('data/cloudmind.db')
 
 user_controller = UserController(database)
 session_controller = SessionController(database)
+message_controller = MessageController(database)
 
 def health_handler(request: Request) -> Response:
   return Response.ok({"status": "ok"})
@@ -34,7 +36,9 @@ router.add("GET", "/users", user_controller.list)
 router.add("GET", "/users/{id}", user_controller.get)
 router.add("POST", "/sessions", session_controller.create)
 router.add("GET", "/users/{id}/sessions", session_controller.list)
-router.add("GET", "/users/{id}/sessions/{session_id}", session_controller.get)
+router.add("GET", "/sessions/{id}", session_controller.get)
+router.add("POST", "/sessions/{id}/messages", message_controller.create)
+router.add("GET", "/sessions/{id}/messages", message_controller.list)
 
 
 def handle_connection(conn, addr):
