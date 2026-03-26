@@ -8,10 +8,12 @@ from src.db.database import Database
 from src.server.controller.user import UserController
 from src.server.controller.session import SessionController
 from src.server.controller.message import MessageController
+from src.db.exceptions import NotFoundError, ValidationError
+import os
 
 # Router instanziieren und Routen registrieren
 router = Router()
-database = Database('data/cloudmind.db')
+database = Database(os.environ.get("DB_PATH", "data/db/cloudmind.db"))
 
 
 user_controller = UserController(database)
@@ -48,9 +50,13 @@ def handle_connection(conn, addr):
     request = Request(request_data)
     response = router.dispatch(request)
     conn.sendall(response.to_bytes())
+  except NotFoundError as e:
+    conn.sendall((Response.not_found({"error": str(e)}).to_bytes()))
+  except ValidationError as e:
+    conn.sendall((Response.bad_request({"error": str(e)}).to_bytes()))
   except Exception as e:
     print(f"[ERROR]: {e}", file=sys.stderr)
-    conn.sendall((Response.error(str(e))).to_bytes())
+    conn.sendall((Response.error({"error": str(e)}).to_bytes()))
   finally:
     conn.close()
 

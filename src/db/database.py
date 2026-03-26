@@ -1,4 +1,5 @@
 import sqlite3
+from src.db.exceptions import NotFoundError, ValidationError
 
 class Database:
   def __init__(self, db_path: str):
@@ -51,7 +52,7 @@ class Database:
   def create_session(self, user_id: int, title: str = None) -> dict:
     get_user = self.get_user(user_id)
     if not get_user:
-      raise ValueError()
+      raise NotFoundError(f"User {user_id} not found")
     
     cursor = self.connection.execute('INSERT INTO sessions (user_id, title) VALUES (?, ?)', (user_id, title))
     self.connection.commit()
@@ -69,7 +70,7 @@ class Database:
   
   def add_message(self, session_id: int, role: str, content: str) -> dict:
     if role not in ['user', 'assistant']:
-      raise ValueError("Invalid role")
+      raise ValidationError("Invalid role")
     cursor = self.connection.execute('INSERT INTO messages (session_id, role, content) VALUES (?, ?, ?)', (session_id, role, content))
     self.connection.commit()
     return {"id": cursor.lastrowid}
