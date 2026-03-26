@@ -69,8 +69,42 @@ curl -X POST http://localhost:8080/sessions \
 # 8) Get all sessions correlated to a specific user (GET /users/{id}/sessions)
 curl http://localhost:8080/users/1/sessions
 
-# 9) Get specific session by ID correlated to a specific user (GET /users/{id}/sessions/{session_id})
-curl http://localhost:8080/users/1/sessions/1
+# 9) Get specific session by ID (GET /sessions/{id})
+curl http://localhost:8080/sessions/1
+
+# 10) Add a message to a session (POST /sessions/{id}/messages)
+curl -X POST http://localhost:8080/sessions/1/messages \
+  -H "Content-Type: application/json" \
+  -d '{"content": "Hallo, CloudMind!"}'
+
+# 11) Get all messages in a session (GET /sessions/{id}/messages)
+curl http://localhost:8080/sessions/1/messages
+```
+
+### Complete flow: User → Session → Messages → History
+
+```bash
+# Step 1: Create a user
+curl -X POST http://localhost:8080/users \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Leon"}'
+# → {"id": 1}
+
+# Step 2: Create a session for that user
+curl -X POST http://localhost:8080/sessions \
+  -H "Content-Type: application/json" \
+  -d '{"user_id": 1, "title": "Erster Chat"}'
+# → {"id": 1}
+
+# Step 3: Add a message to the session
+curl -X POST http://localhost:8080/sessions/1/messages \
+  -H "Content-Type: application/json" \
+  -d '{"content": "Hallo, CloudMind!"}'
+# → {"id": 1}
+
+# Step 4: Read the conversation history
+curl http://localhost:8080/sessions/1/messages
+# → [{"id": 1, "session_id": 1, "role": "user", "content": "Hallo, CloudMind!", "created_at": "..."}]
 ```
 
 ---
@@ -84,10 +118,10 @@ cloudmind/
 │   │  
 │   └── server/
 │       ├── controller/
+│       │   ├── message.py   # Message controller
 │       │   ├── session.py   # Session controller
 │       │   └── user.py      # User controller
 │       │ 
-│       ├── tcp_server.py    # HTTP server (DEPRECATED)
 │       ├── response.py      # HTTP response parser
 │       ├── request.py       # HTTP request parser
 │       ├── router.py        # Router-class
@@ -130,10 +164,12 @@ Start the server (see Quick start above) and make requests to the endpoints list
 | `/echo` | Echo endpoint - Returns JSON body | 200 | POST |
 | `/users` | Create a new user (expects JSON with 'name') | 201 | POST |
 | `/users` | Get a list of all users | 200 | GET |
-| `/users/{id}`| Get a specific user by ID | 200 / 404| GET |
+| `/users/{id}` | Get a specific user by ID | 200 / 404 | GET |
 | `/sessions` | Create a new session (expects JSON with 'user_id' and 'title') | 201 | POST |
-| `/users/{id}/sessions` | Get a list of all sessions correlated to a specific user | 200 | GET |
-| `/users/{id}/sessions/{session_id}`| Get a specific session by ID correlated to a specific user | 200 / 404| GET |
+| `/users/{id}/sessions` | Get a list of all sessions for a specific user | 200 | GET |
+| `/sessions/{id}` | Get a specific session by ID | 200 / 404 | GET |
+| `/sessions/{id}/messages` | Add a message to a session (expects JSON with 'content') | 201 | POST |
+| `/sessions/{id}/messages` | Get all messages in a session (chronological) | 200 | GET |
 | `/xyz` | All other routes - Not Found | 404 | * |
 
 ---
@@ -177,11 +213,10 @@ python3 -m pytest tests/test_database.py -v
 ---
 ## Requirements
 
-- Python 3.10+ (uses match/case syntax)
+- Python 3.10+
 - pytest for running tests
 
 ---
 ## License
 
 This project is open source and available for educational purposes.
-
