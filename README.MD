@@ -117,6 +117,9 @@ curl http://localhost:8080/sessions/1/messages
 ```
 cloudmind/
 ├── src/
+│   ├── config/
+│   │   └── config.py        # Configuration class
+│   │
 │   ├── db/
 │   │   ├── exceptions.py    # Exception classes
 │   │   └── database.py      # Database class
@@ -133,11 +136,14 @@ cloudmind/
 │       └── server.py        # Main HTTP server
 │ 
 ├── tests/
+│   ├── test_config.py       # Unit tests for configuration system
 │   ├── test_database.py     # Unit tests for database operations
 │   ├── test_response.py     # Unit tests for Response class
 │   ├── test_request.py      # Unit tests for Request class
 │   └── test_router.py       # Unit tests for Router class
-│ 
+│
+├── config.example.xaml      # Example YAML
+├── .env.example             # Example ENV
 ├── requirements.txt         # Python dependencies
 └── README.MD                # Project documentation
 ```
@@ -165,7 +171,7 @@ Start the server (see Quick start above) and make requests to the endpoints list
 | Route | Description | Status Code | Method |
 |-------|-------------|-------------|--------|
 | `/` | Main route - Welcome message | 200 | GET |
-| `/health` | Health check endpoint | 200 | GET |
+| `/health` | Health check endpoint and llm_model | 200 | GET |
 | `/echo` | Echo endpoint - Returns JSON body | 200 | POST |
 | `/users` | Create a new user (expects JSON with 'name') | 201 | POST |
 | `/users` | Get a list of all users | 200 | GET |
@@ -214,6 +220,12 @@ python3 -m pytest tests/test_router.py -v
 
 ```bash
 python3 -m pytest tests/test_database.py -v
+```
+
+### Configuration system tests
+
+```bash
+python3 -m pytest tests/test_config.py -v
 ```
 
 ---
