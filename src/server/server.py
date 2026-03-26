@@ -10,10 +10,12 @@ from src.server.controller.session import SessionController
 from src.server.controller.message import MessageController
 from src.db.exceptions import NotFoundError, ValidationError
 import os
+from src.config.config import Config
 
 # Router instanziieren und Routen registrieren
 router = Router()
-database = Database(os.environ.get("DB_PATH", "data/db/cloudmind.db"))
+config = Config.load("config.yaml")
+database = Database(config.database_path)
 
 
 user_controller = UserController(database)
@@ -21,7 +23,7 @@ session_controller = SessionController(database)
 message_controller = MessageController(database)
 
 def health_handler(request: Request) -> Response:
-  return Response.ok({"status": "ok"})
+  return Response.ok({"status": "ok", "model": config.llm_model})
 
 def home_handler(request: Request) -> Response:
   return Response.ok({"message": "Willkommen bei CloudMind"})
@@ -66,9 +68,9 @@ def handle_connection(conn, addr):
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-server.bind(('localhost', 8080))
+server.bind((config.host, config.port))
 server.listen(5)
-print("Server is listening on port 8080...")
+print(f"Server is listening on port {config.port}...")
 
 while True:
     conn = None
