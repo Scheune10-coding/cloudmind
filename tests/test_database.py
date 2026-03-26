@@ -61,3 +61,16 @@ def test_get_messages(db):
   assert messages[0]["session_id"] == session_id
   assert messages[0]["role"] == "user"
   assert messages[0]["content"] == "Hello, world!"
+
+def test_get_stats(db):
+  user_id = db.create_user("Test User")
+  session = db.create_session(user_id, "Test Session")
+  session_id = session["id"]
+  db.add_message(session_id, "user", "Hello, world!")
+  stats = db.get_stats()
+  assert stats["users"] == 1
+  assert stats["sessions"] == 1
+  assert stats["messages"] == 1
+  assert stats["first_message"] is not None
+  assert stats["last_message"] is not None
+  assert isinstance(stats["messages_per_role"], dict)

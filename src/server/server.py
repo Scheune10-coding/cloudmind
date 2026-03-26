@@ -29,6 +29,9 @@ def home_handler(request: Request) -> Response:
 def echo_handler(request: Request) -> Response:
   return Response.ok(request.json) if request.json else Response.bad_request({"error": "Invalid JSON body"})
 
+def stats_handler(request: Request) -> Response:
+  stats = database.get_stats()
+  return Response.ok(stats)
 
 router.add("GET", "/health", health_handler)
 router.add("GET", "/", home_handler)
@@ -41,6 +44,7 @@ router.add("GET", "/users/{id}/sessions", session_controller.list)
 router.add("GET", "/sessions/{id}", session_controller.get)
 router.add("POST", "/sessions/{id}/messages", message_controller.create)
 router.add("GET", "/sessions/{id}/messages", message_controller.list)
+router.add("GET", "/stats", stats_handler)
 
 
 def handle_connection(conn, addr):

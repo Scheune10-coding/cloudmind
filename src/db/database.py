@@ -1,5 +1,6 @@
 import sqlite3
 from src.db.exceptions import NotFoundError, ValidationError
+import pandas as pd
 
 class Database:
   def __init__(self, db_path: str):
@@ -79,3 +80,35 @@ class Database:
     cursor = self.connection.execute('SELECT * FROM messages WHERE session_id = ? ORDER BY created_at ASC', (session_id,))
     rows = cursor.fetchall()
     return [dict(row) for row in rows]
+  
+  def get_stats(self) -> dict:
+    cursor = self.connection.execute('SELECT COUNT(*) AS user_count FROM users')
+    user_count = cursor.fetchone()['user_count']
+    
+    cursor = self.connection.execute('SELECT COUNT(*) AS session_count FROM sessions')
+    session_count = cursor.fetchone()['session_count']
+    
+    cursor = self.connection.execute('SELECT COUNT(*) AS message_count FROM messages')
+    message_count = cursor.fetchone()['message_count']
+
+    messages = self.get_messages_all()
+    if messages:
+      df = pd.DataFrame(messages)
+      df['created_at'] = pd.to_datetime(df['created_at'])
+      
+      first_message = df['created_at'].min().isoformat() if not df.empty else None
+      last_message = df['created_at'].max().isoformat() if not df.empty else None
+      messages_per_role = df['role'].value_counts().to_dict() if not df.empty else {}
+
+    return {
+      "users": user_count,
+      "sessions": session_count,
+      "messages": message_count,
+      "first_message": first_message,
+      "last_message": last_message,
+      "messages_per_role": messages_per_role
+    }
+  
+  def get_messages_all(self) -> list:
+    cursor = self.connection.execute('SELECT * FROM messages ORDER BY created_at ASC')
+    return [dict(row) for row in cursor.fetchall()]
