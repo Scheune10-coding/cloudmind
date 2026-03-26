@@ -79,6 +79,10 @@ curl -X POST http://localhost:8080/sessions/1/messages \
 
 # 11) Get all messages in a session (GET /sessions/{id}/messages)
 curl http://localhost:8080/sessions/1/messages
+
+# 12) Get db stats (GET /stats)
+curl http://localhost:8080/stats
+
 ```
 
 ### Complete flow: User → Session → Messages → History
@@ -114,6 +118,7 @@ curl http://localhost:8080/sessions/1/messages
 cloudmind/
 ├── src/
 │   ├── db/
+│   │   ├── exceptions.py    # Exception classes
 │   │   └── database.py      # Database class
 │   │  
 │   └── server/
@@ -170,6 +175,7 @@ Start the server (see Quick start above) and make requests to the endpoints list
 | `/sessions/{id}` | Get a specific session by ID | 200 / 404 | GET |
 | `/sessions/{id}/messages` | Add a message to a session (expects JSON with 'content') | 201 | POST |
 | `/sessions/{id}/messages` | Get all messages in a session (chronological) | 200 | GET |
+| `/stats` | Get db stats | 200 | GET |
 | `/xyz` | All other routes - Not Found | 404 | * |
 
 ---
