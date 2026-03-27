@@ -118,7 +118,8 @@ curl http://localhost:8080/sessions/1/messages
 cloudmind/
 ├── src/
 │   ├── config/
-│   │   └── config.py        # Configuration class
+│   │   ├── config.py        # Configuration class
+│   │   └── logging_setup.py # Logging setup
 │   │
 │   ├── db/
 │   │   ├── exceptions.py    # Exception classes
