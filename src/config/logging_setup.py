@@ -10,7 +10,7 @@ def setup_logging(level: str, log_file: str):
   stream_handler = logging.StreamHandler()
   stream_handler.setFormatter(formatter)
 
-  file_handler = logging.RotatingFileHandler(log_file, maxBytes=10*1024*1024, backupCount=3)
+  file_handler = logging.handlers.RotatingFileHandler(log_file, maxBytes=10*1024*1024, backupCount=3)
   file_handler.setFormatter(formatter)
 
   root_logger.addHandler(stream_handler)
