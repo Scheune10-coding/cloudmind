@@ -54,10 +54,14 @@ router.add("GET", "/stats", stats_handler)
 
 def handle_connection(conn, addr):
   logger.info(f"Connection from {addr}") 
-  start_time = time.time() 
+  start_time = time.time()
   try:
     request_data = conn.recv(1024).decode('utf-8')
-    request = Request(request_data)
+  except Exception as e:
+    logger.error(f"Error retrieving request data from {addr}")
+    conn.close()
+  try:
+    request = Request(request_data) 
     response = router.dispatch(request)
     conn.sendall(response.to_bytes())
   except NotFoundError as e:
