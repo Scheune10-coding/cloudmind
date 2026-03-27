@@ -12,28 +12,10 @@ git clone https://github.com/Scheune10-coding/cloudmind.git
 cd cloudmind
 ```
 
-### 2. Create and activate virtual environment
+### 2. Start HTTP server
 
 ```bash
-python3 -m venv venv
-source venv/bin/activate
-```
-
-### 3. Install dependencies
-
-```bash
-pip3 install -r requirements.txt
-```
-
----
-## Quick start
-
-Start the server and try example requests immediately.
-
-### Start the server
-
-```bash
-python3 src/server/server.py
+./start.sh
 ```
 
 ### Example requests
@@ -116,6 +98,10 @@ curl http://localhost:8080/sessions/1/messages
 
 ```
 cloudmind/
+├── scripts/
+│   ├── export_messages.py   # Script for messages export
+│   └── export.sh            # Cronjob script
+│ 
 ├── src/
 │   ├── config/
 │   │   ├── config.py        # Configuration class
@@ -143,9 +129,10 @@ cloudmind/
 │   ├── test_request.py      # Unit tests for Request class
 │   └── test_router.py       # Unit tests for Router class
 │
-├── config.example.xaml      # Example YAML
 ├── .env.example             # Example ENV
+├── config.example.xaml      # Example YAML
 ├── requirements.txt         # Python dependencies
+├── start.sh                 # Start script
 └── README.MD                # Project documentation
 ```
 
