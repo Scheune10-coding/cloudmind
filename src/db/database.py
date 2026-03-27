@@ -1,13 +1,19 @@
 import sqlite3
 from src.db.exceptions import NotFoundError, ValidationError
 import pandas as pd
+import logging
+logger = logging.getLogger(__name__)
 
 class Database:
   def __init__(self, db_path: str):
     self.db_path = db_path
-    self.connection = sqlite3.connect(self.db_path, check_same_thread=False)
-    self.connection.row_factory = sqlite3.Row
-    self.initialize()
+    try:
+      self.connection = sqlite3.connect(self.db_path, check_same_thread=False)
+      self.connection.row_factory = sqlite3.Row
+      self.initialize()
+    except Exception as e:
+      logger.error(f"Error initializing database: {e}")
+      raise e
 
   def initialize(self):
     self.connection.executescript('''
@@ -92,6 +98,9 @@ class Database:
     message_count = cursor.fetchone()['message_count']
 
     messages = self.get_messages_all()
+    first_message = None
+    last_message = None
+    messages_per_role = {}
     if messages:
       df = pd.DataFrame(messages)
       df['created_at'] = pd.to_datetime(df['created_at'])

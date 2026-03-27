@@ -1,5 +1,7 @@
 from .request import Request
 from .response import Response
+import logging
+logger = logging.getLogger(__name__)
 
 class Router:
   def __init__(self):
@@ -33,6 +35,7 @@ class Router:
 
     if allowed_methods:
       return Response.method_not_allowed({"error": "Method Not Allowed"}, allowed_methods)
+    logger.info(f"No route found: {request.method} {request.path}")
     return Response.not_found({"error": "Not Found"})
       
 

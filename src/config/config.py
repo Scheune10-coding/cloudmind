@@ -24,10 +24,10 @@ class Config:
       with open(path, 'r') as f:
         data = yaml.safe_load(f)
     except FileNotFoundError:
-      print(f"[ERROR]: Config file '{path}' not found.")
+      logger.error(f"Config file '{path}' not found.")
       sys.exit(1)
     except yaml.YAMLError as e:
-      print(f"[ERROR]: Error parsing config file: {e}")
+      logger.error(f"Error parsing config file: {e}")
       sys.exit(1)
     cls._instance = cls(data)
     return cls._instance

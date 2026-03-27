@@ -1,6 +1,5 @@
 import socket
 import threading
-import sys
 from src.server.request import Request
 from src.server.response import Response
 from src.server.router import Router
@@ -9,12 +8,16 @@ from src.server.controller.user import UserController
 from src.server.controller.session import SessionController
 from src.server.controller.message import MessageController
 from src.db.exceptions import NotFoundError, ValidationError
-import os
 from src.config.config import Config
+from src.config.logging_setup import setup_logging
+import time
+import logging
+logger = logging.getLogger(__name__)
 
 # Router instanziieren und Routen registrieren
 router = Router()
 config = Config.load("config.yaml")
+setup_logging(config.logging_level, config.logging_file)
 database = Database(config.database_path)
 
 
@@ -50,7 +53,8 @@ router.add("GET", "/stats", stats_handler)
 
 
 def handle_connection(conn, addr):
-  print(f"Connection from {addr}")
+  logger.info(f"Connection from {addr}") 
+  start_time = time.time() 
   try:
     request_data = conn.recv(1024).decode('utf-8')
     request = Request(request_data)
@@ -61,16 +65,18 @@ def handle_connection(conn, addr):
   except ValidationError as e:
     conn.sendall((Response.bad_request({"error": str(e)}).to_bytes()))
   except Exception as e:
-    print(f"[ERROR]: {e}", file=sys.stderr)
+    logger.error(f"Error handling request: {e}", exc_info=True)
     conn.sendall((Response.error({"error": str(e)}).to_bytes()))
   finally:
+    duration = time.time() - start_time
+    logger.info(f"{request.method} {request.path} {response.status} {duration:.31}s")
     conn.close()
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 server.bind((config.host, config.port))
 server.listen(5)
-print(f"Server is listening on port {config.port}...")
+logger.info(f"Server is listening on port {config.port}...")
 
 while True:
     conn = None
@@ -78,4 +84,4 @@ while True:
         conn, addr = server.accept()
         threading.Thread(target=handle_connection, args=(conn, addr)).start()
     except Exception as e:
-        print(f"[ERROR]: {e}", file=sys.stderr)   
+        logger.error(f"Error accepting connection: {e}", exc_info=True)

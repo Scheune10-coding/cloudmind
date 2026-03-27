@@ -1,5 +1,5 @@
-class NotFoundError:
+class NotFoundError(Exception):
   pass
 
-class ValidationError:
+class ValidationError(Exception):
   pass
