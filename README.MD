@@ -148,6 +148,9 @@ cloudmind/
 - Unit tests with pytest
 - SQLite database integration
 - Controller pattern for route handlers
+- Structered logging
+- Start-script
+- Message export via cronjob
 
 ---
 ## How to use the server
