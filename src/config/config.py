@@ -1,19 +1,22 @@
 import os
 import yaml
 import sys
+from dotenv import load_dotenv
+load_dotenv()
+import logging
+logger = logging.getLogger(__name__)
 
 class Config:
   _instance = None
 
   def __init__(self, data: dict):
-    yaml_port = data['server']['port']
-    yaml_host = data['server']['host']
 
-    self.port = int(os.environ.get('SERVER_PORT', yaml_port))
-    self.host = os.environ.get('SERVER_HOST', yaml_host)
+    self.port = int(os.environ.get('SERVER_PORT', data['server']['port']))
+    self.host = os.environ.get('SERVER_HOST', data['server']['host'])
     self.database_path = os.environ.get('DATABASE_PATH', data['database']['path'])
     self.logging_level = os.environ.get('LOGGING_LEVEL', data['logging']['level'])
     self.logging_file = os.environ.get('LOGGING_FILE', data['logging']['file'])
+    self.llm_api_key = os.environ.get('LLM_API_KEY', data['llm']['api_key'])
     self.llm_model = os.environ.get('LLM_MODEL_NAME', data['llm']['model'])
     self.llm_max_tokens = int(os.environ.get('LLM_MAX_TOKENS', data['llm']['max_tokens']))
     self.llm_temperature = float(os.environ.get('LLM_TEMPERATURE', data['llm']['temperature']))
