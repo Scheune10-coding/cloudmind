@@ -112,7 +112,8 @@ cloudmind/
 │   │   └── database.py      # Database class
 │   │ 
 │   ├── llm/
-│   │   └── llm_client.py    # LLM-client class
+│   │   ├── exceptions.py    # Exception classes
+│   │   └── llm_client.py    # LLM client class
 │   │ 
 │   └── server/
 │       ├── controller/
