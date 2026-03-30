@@ -1,5 +1,7 @@
 import requests
 from src.config.config import Config
+from src.llm.exceptions import AuthenticationError, RateLimitError, LLMError
+import time
 import logging
 logger = logging.getLogger(__name__)
 
@@ -35,10 +37,37 @@ class LLMClient:
       "max_tokens": max_tokens
     }
 
-    response = requests.post(self.base_url, headers=headers, json=body, timeout=30)
-    data = response.json()
-    usage = data.get("usage", {})
+    response = {}
+    for i in range(3):
+      try:
+        response = self.request(self.base_url, headers, body)
+      except AuthenticationError as e:
+        logger.error(f"Authentication error: {e}")
+        break
+      except RateLimitError as e:
+        logger.warning(f"Rate limit error: {e}. Retrying in {i ** 2} seconds...")
+        time.sleep(i ** 2)
+        continue
+      except LLMError as e:
+        logger.warning(f"LLM API error: {e}. Retrying in {i ** 2} seconds...")
+        time.sleep(i ** 2)
+        continue
+      if i == 2:
+        logger.error("Failed to call LLM API after 3 attempts.")
+      break
+    
+    usage = response.get("usage", {})
     logger.info(f"Tokens — prompt: {usage.get('prompt_tokens', 0)}, completion: {usage.get('completion_tokens', 0)}, total: {usage.get('total_tokens', 0)}")
-    logger.info(f"Model: {data.get('model')}, finish_reason: {data.get('choices', [{}])[0].get('finish_reason')}")
-    return data["choices"][0]["message"]["content"]
+    logger.info(f"Model: {response.get('model')}, finish_reason: {response.get('choices', [{}])[0].get('finish_reason')}")
+    return response["choices"][0]["message"]["content"]
+
+  def request(self, url, headers, body, timeout=30):
+    response = requests.post(url, headers=headers, json=body, timeout=timeout)
+    if response.status_code == 401:
+      raise AuthenticationError("LLM API authentication failed. Check your API key.")
+    elif response.status_code == 429:
+      raise RateLimitError("LLM API rate limit exceeded. Please try again later.")
+    elif response.status_code != 200:
+      raise LLMError(f"LLM API error: {response.status_code} - {response.text}")
+    return response.json()
 
