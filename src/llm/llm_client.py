@@ -14,8 +14,10 @@ class LLMClient:
     self.model = config.llm_model
     self.max_tokens = config.llm_max_tokens
     self.temperature = config.llm_temperature
+    self.system_prompt = config.llm_system_prompt
 
   def chat(self, messages: list) -> str:
+    messages = [{"role": "system", "content": self.system_prompt}] + messages
     return self.call_api(messages, self.model, self.max_tokens)
 
   def complete(self, system_prompt: str, user_input: str) -> str:

@@ -1,5 +1,6 @@
 import socket
 import threading
+import json
 from src.server.request import Request
 from src.server.response import Response
 from src.server.router import Router
@@ -58,6 +59,9 @@ def chat_handler(request: Request) -> Response:
   logger.info(f"LLM response: {response_message}. Message and Response saved to database with IDs {message_id} and {response_message_id}")
   return Response.ok({"reply": response_message, "session_id": session["id"], "message_id": response_message_id})
 
+def config_handler(request: Request) -> Response:
+  return Response.ok(config.to_dict())
+
 router.add("GET", "/health", health_handler)
 router.add("GET", "/", home_handler)
 router.add("POST", "/echo", echo_handler)
@@ -71,6 +75,7 @@ router.add("POST", "/sessions/{id}/messages", message_controller.create)
 router.add("GET", "/sessions/{id}/messages", message_controller.list)
 router.add("GET", "/stats", stats_handler)
 router.add("POST", "/chat", chat_handler)
+router.add("GET", "/config", config_handler)
 
 
 def handle_connection(conn, addr):

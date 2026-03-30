@@ -22,6 +22,11 @@ class Config:
     self.llm_temperature = float(os.environ.get('LLM_TEMPERATURE', data['llm']['temperature']))
     self.llm_system_prompt = os.environ.get('LLM_SYSTEM_PROMPT', data['llm']['system_prompt'])
 
+  def to_dict(self) -> dict:
+    data = self.__dict__.copy()
+    data.pop("llm_api_key", None)
+    return data
+
   @classmethod
   def load(cls, path: str):
     try:
