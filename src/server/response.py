@@ -22,7 +22,7 @@ class Response:
     self.extra_headers = headers or {}
 
   def to_bytes (self) -> bytes:
-    body_bytes = json.dumps(self.body).encode('utf-8')
+    body_bytes = json.dumps(self.body, ensure_ascii=False).encode('utf-8')
     status_line = f'HTTP/1.1 {self.status} {STATUS[self.status]}\r\n'
     headers = f'Content-Type: application/json\r\nContent-Length: {len(body_bytes)}\r\n'
     if self.extra_headers:

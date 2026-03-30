@@ -58,8 +58,8 @@ class LLMClient:
     
     usage = response.get("usage", {})
     logger.info(f"Tokens — prompt: {usage.get('prompt_tokens', 0)}, completion: {usage.get('completion_tokens', 0)}, total: {usage.get('total_tokens', 0)}")
-    logger.info(f"Model: {response.get('model')}, finish_reason: {response.get('choices', [{}])[0].get('finish_reason')}")
-    return response["choices"][0]["message"]["content"]
+    response_message = response.get("choices", [{}])[0].get("message", {}).get("content", "")
+    return response_message
 
   def request(self, url, headers, body, timeout=30):
     response = requests.post(url, headers=headers, json=body, timeout=timeout)

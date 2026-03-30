@@ -10,6 +10,7 @@ from src.server.controller.message import MessageController
 from src.db.exceptions import NotFoundError, ValidationError
 from src.config.config import Config
 from src.config.logging_setup import setup_logging
+from src.llm.llm_client import LLMClient
 import time
 import logging
 logger = logging.getLogger(__name__)
@@ -38,6 +39,25 @@ def stats_handler(request: Request) -> Response:
   stats = database.get_stats()
   return Response.ok(stats)
 
+def chat_handler(request: Request) -> Response:
+  if not request.json or "message" not in request.json:
+    return Response.bad_request({"error": "Invalid JSON body, expected 'message' field"})
+  session_id = request.json.get("session_id")
+  if not session_id:
+    return Response.bad_request({"error": "Session ID is required"})
+  session = database.get_session(session_id)
+  if not session:
+    return Response.not_found({"error": "Session not found"})
+  message = request.json["message"]
+  llm_client = LLMClient()
+  response_message = llm_client.complete(config.llm_system_prompt, message)
+  if not response_message:
+    return Response.error({"error": "LLM did not return a response"})
+  message_id = database.add_message(session["id"], "user", message)["id"]
+  response_message_id = database.add_message(session["id"], "assistant", response_message)["id"]
+  logger.info(f"LLM response: {response_message}. Message and Response saved to database with IDs {message_id} and {response_message_id}")
+  return Response.ok({"reply": response_message, "session_id": session["id"], "message_id": response_message_id})
+
 router.add("GET", "/health", health_handler)
 router.add("GET", "/", home_handler)
 router.add("POST", "/echo", echo_handler)
@@ -50,6 +70,7 @@ router.add("GET", "/sessions/{id}", session_controller.get)
 router.add("POST", "/sessions/{id}/messages", message_controller.create)
 router.add("GET", "/sessions/{id}/messages", message_controller.list)
 router.add("GET", "/stats", stats_handler)
+router.add("POST", "/chat", chat_handler)
 
 
 def handle_connection(conn, addr):

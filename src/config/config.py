@@ -20,6 +20,7 @@ class Config:
     self.llm_model = os.environ.get('LLM_MODEL_NAME', data['llm']['model'])
     self.llm_max_tokens = int(os.environ.get('LLM_MAX_TOKENS', data['llm']['max_tokens']))
     self.llm_temperature = float(os.environ.get('LLM_TEMPERATURE', data['llm']['temperature']))
+    self.llm_system_prompt = os.environ.get('LLM_SYSTEM_PROMPT', data['llm']['system_prompt'])
 
   @classmethod
   def load(cls, path: str):
