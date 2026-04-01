@@ -104,8 +104,7 @@ cloudmind/
 │ 
 ├── src/
 │   ├── config/
-│   │   ├── config.py        # Configuration class
-│   │   └── logging_setup.py # Logging setup
+│   │   └── config.py        # Configuration class
 │   │
 │   ├── db/
 │   │   ├── exceptions.py    # Exception classes
@@ -114,6 +113,9 @@ cloudmind/
 │   ├── llm/
 │   │   ├── exceptions.py    # Exception classes
 │   │   └── llm_client.py    # LLM client class
+│   │ 
+│   ├── logging/
+│   │   └── logging_setup.py # Logging setup
 │   │ 
 │   └── server/
 │       ├── controller/
