@@ -129,7 +129,7 @@ cloudmind/
 │       ├── router.py        # Router-class
 │       └── server.py        # Main HTTP server
 │ 
-├── tests/
+├── tests/                   # Unit tests
 │
 ├── .env.example             # Example ENV
 ├── config.example.xaml      # Example YAML
