@@ -130,11 +130,6 @@ cloudmind/
 │       └── server.py        # Main HTTP server
 │ 
 ├── tests/
-│   ├── test_config.py       # Unit tests for configuration system
-│   ├── test_database.py     # Unit tests for database operations
-│   ├── test_response.py     # Unit tests for Response class
-│   ├── test_request.py      # Unit tests for Request class
-│   └── test_router.py       # Unit tests for Router class
 │
 ├── .env.example             # Example ENV
 ├── config.example.xaml      # Example YAML
@@ -224,6 +219,18 @@ python3 -m pytest tests/test_database.py -v
 
 ```bash
 python3 -m pytest tests/test_config.py -v
+```
+
+### Chat and LLM-MockUp  tests
+
+```bash
+python3 -m pytest tests/test_chat.py -v
+```
+
+### Token tracker  tests
+
+```bash
+python3 -m pytest tests/test_token_tracker.py -v
 ```
 
 ---
