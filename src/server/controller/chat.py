@@ -23,12 +23,15 @@ class ChatController:
     if not session:
       return Response.not_found({"error": "Session not found"})
 
-    message = request.json["message"]
-    response_message = self.llm_client.chat([{"role": "user", "content": message}])
+    messages = self.database.get_messages(session_id)
+    user_message = {"role": "user", "content": request.json["message"]}
+    llm_messages = [{"role": msg["role"], "content": msg["content"]} for msg in messages]
+    llm_messages.append(user_message)
+    response_message = self.llm_client.chat(llm_messages)
     if not response_message:
       return Response.error("LLM did not return a response")
 
-    message_id = self.database.add_message(session["id"], "user", message)["id"]
+    message_id = self.database.add_message(session["id"], user_message["role"], user_message["content"])["id"]
     response_message_id = self.database.add_message(session["id"], "assistant", response_message)["id"]
     logger.info(
       "LLM response saved. message_id=%s, response_id=%s",
