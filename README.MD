@@ -112,7 +112,8 @@ cloudmind/
 │   │ 
 │   ├── llm/
 │   │   ├── exceptions.py    # Exception classes
-│   │   └── llm_client.py    # LLM client class
+│   │   ├── llm_client.py    # LLM client class
+│   │   └── token_tracker.py # Token tracker class
 │   │ 
 │   ├── logging/
 │   │   └── logging_setup.py # Logging setup
