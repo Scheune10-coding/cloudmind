@@ -1,8 +1,8 @@
 class LLMError(Exception):
   pass
 
-class RateLimitError(Exception):
+class RateLimitError(LLMError):
   pass
 
-class AuthenticationError(Exception):
+class AuthenticationError(LLMError):
   pass

@@ -44,5 +44,5 @@ class Config:
   @classmethod
   def get_instance(cls):
     if cls._instance is None:
-      raise RuntimeError("Zuerst Config.load() aufrufen!")
+      raise RuntimeError("Config not loaded. Call Config.load() first.")
     return cls._instance

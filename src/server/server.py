@@ -1,66 +1,60 @@
+import logging
 import socket
 import threading
-import json
+import time
+
+from src.config.config import Config
+from src.db.database import Database
+from src.db.exceptions import NotFoundError, ValidationError
+from src.llm.llm_client import LLMClient
+from src.logging.logging_setup import setup_logging
+from src.server.controller.chat import ChatController
+from src.server.controller.message import MessageController
+from src.server.controller.session import SessionController
+from src.server.controller.user import UserController
 from src.server.request import Request
 from src.server.response import Response
 from src.server.router import Router
-from src.db.database import Database
-from src.server.controller.user import UserController
-from src.server.controller.session import SessionController
-from src.server.controller.message import MessageController
-from src.db.exceptions import NotFoundError, ValidationError
-from src.config.config import Config
-from src.config.logging_setup import setup_logging
-from src.llm.llm_client import LLMClient
-import time
-import logging
+
 logger = logging.getLogger(__name__)
 
-# Router instanziieren und Routen registrieren
+RECV_BUFFER_SIZE = 1024
+LISTEN_BACKLOG = 5
+
 router = Router()
 config = Config.load("config.yaml")
 setup_logging(config.logging_level, config.logging_file)
 database = Database(config.database_path)
-
+llm_client = LLMClient()
 
 user_controller = UserController(database)
 session_controller = SessionController(database)
 message_controller = MessageController(database)
+chat_controller = ChatController(database, llm_client)
+
 
 def health_handler(request: Request) -> Response:
   return Response.ok({"status": "ok", "model": config.llm_model})
 
+
 def home_handler(request: Request) -> Response:
-  return Response.ok({"message": "Willkommen bei CloudMind"})
+  return Response.ok({"message": "Welcome to CloudMind"})
+
 
 def echo_handler(request: Request) -> Response:
-  return Response.ok(request.json) if request.json else Response.bad_request({"error": "Invalid JSON body"})
+  if request.json:
+    return Response.ok(request.json)
+  return Response.bad_request({"error": "Invalid JSON body"})
+
 
 def stats_handler(request: Request) -> Response:
   stats = database.get_stats()
   return Response.ok(stats)
 
-def chat_handler(request: Request) -> Response:
-  if not request.json or "message" not in request.json:
-    return Response.bad_request({"error": "Invalid JSON body, expected 'message' field"})
-  session_id = request.json.get("session_id")
-  if not session_id:
-    return Response.bad_request({"error": "Session ID is required"})
-  session = database.get_session(session_id)
-  if not session:
-    return Response.not_found({"error": "Session not found"})
-  message = request.json["message"]
-  llm_client = LLMClient()
-  response_message = llm_client.complete(config.llm_system_prompt, message)
-  if not response_message:
-    return Response.error({"error": "LLM did not return a response"})
-  message_id = database.add_message(session["id"], "user", message)["id"]
-  response_message_id = database.add_message(session["id"], "assistant", response_message)["id"]
-  logger.info(f"LLM response: {response_message}. Message and Response saved to database with IDs {message_id} and {response_message_id}")
-  return Response.ok({"reply": response_message, "session_id": session["id"], "message_id": response_message_id})
 
 def config_handler(request: Request) -> Response:
   return Response.ok(config.to_dict())
+
 
 router.add("GET", "/health", health_handler)
 router.add("GET", "/", home_handler)
@@ -74,44 +68,51 @@ router.add("GET", "/sessions/{id}", session_controller.get)
 router.add("POST", "/sessions/{id}/messages", message_controller.create)
 router.add("GET", "/sessions/{id}/messages", message_controller.list)
 router.add("GET", "/stats", stats_handler)
-router.add("POST", "/chat", chat_handler)
+router.add("POST", "/chat", chat_controller.create)
 router.add("GET", "/config", config_handler)
 
 
 def handle_connection(conn, addr):
-  logger.info(f"Connection from {addr}") 
+  logger.info("Connection from %s", addr)
   start_time = time.time()
+  request = None
+  response = None
   try:
-    request_data = conn.recv(1024).decode('utf-8')
-  except Exception as e:
-    logger.error(f"Error retrieving request data from {addr}")
+    request_data = conn.recv(RECV_BUFFER_SIZE).decode("utf-8")
+  except Exception:
+    logger.error("Error retrieving request data from %s", addr)
     conn.close()
+    return
   try:
-    request = Request(request_data) 
+    request = Request(request_data)
     response = router.dispatch(request)
     conn.sendall(response.to_bytes())
   except NotFoundError as e:
-    conn.sendall((Response.not_found({"error": str(e)}).to_bytes()))
+    conn.sendall(Response.not_found({"error": str(e)}).to_bytes())
   except ValidationError as e:
-    conn.sendall((Response.bad_request({"error": str(e)}).to_bytes()))
+    conn.sendall(Response.bad_request({"error": str(e)}).to_bytes())
   except Exception as e:
-    logger.error(f"Error handling request: {e}", exc_info=True)
-    conn.sendall((Response.error({"error": str(e)}).to_bytes()))
+    logger.error("Error handling request: %s", e, exc_info=True)
+    conn.sendall(Response.error(str(e)).to_bytes())
   finally:
     duration = time.time() - start_time
-    logger.info(f"{request.method} {request.path} {response.status} {duration:.31}s")
+    method = request.method if request else "UNKNOWN"
+    path = request.path if request else "UNKNOWN"
+    status = response.status if response else 500
+    logger.info("%s %s %s %.3fs", method, path, status, duration)
     conn.close()
+
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 server.bind((config.host, config.port))
-server.listen(5)
-logger.info(f"Server is listening on port {config.port}...")
+server.listen(LISTEN_BACKLOG)
+logger.info("Server is listening on port %d...", config.port)
 
 while True:
-    conn = None
-    try:
-        conn, addr = server.accept()
-        threading.Thread(target=handle_connection, args=(conn, addr)).start()
-    except Exception as e:
-        logger.error(f"Error accepting connection: {e}", exc_info=True)
+  conn = None
+  try:
+    conn, addr = server.accept()
+    threading.Thread(target=handle_connection, args=(conn, addr)).start()
+  except Exception as e:
+    logger.error("Error accepting connection: %s", e, exc_info=True)
