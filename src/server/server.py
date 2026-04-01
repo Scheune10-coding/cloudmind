@@ -15,6 +15,7 @@ from src.server.controller.user import UserController
 from src.server.request import Request
 from src.server.response import Response
 from src.server.router import Router
+from src.llm.token_tracker import TokenTracker
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +26,8 @@ router = Router()
 config = Config.load("config.yaml")
 setup_logging(config.logging_level, config.logging_file)
 database = Database(config.database_path)
-llm_client = LLMClient()
+token_tracker = TokenTracker()
+llm_client = LLMClient(token_tracker)
 
 user_controller = UserController(database)
 session_controller = SessionController(database)
@@ -49,6 +51,11 @@ def echo_handler(request: Request) -> Response:
 
 def stats_handler(request: Request) -> Response:
   stats = database.get_stats()
+  stats["token_usage"] = {
+    "total_prompt": token_tracker.total_prompt,
+    "total_completion": token_tracker.total_completion,
+    "total_cost": token_tracker.get_cost()
+  }
   return Response.ok(stats)
 
 

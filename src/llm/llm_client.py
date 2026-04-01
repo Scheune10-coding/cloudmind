@@ -4,6 +4,7 @@ import time
 import requests
 
 from src.config.config import Config
+from src.llm.token_tracker import TokenTracker
 from src.llm.exceptions import AuthenticationError, LLMError, RateLimitError
 
 logger = logging.getLogger(__name__)
@@ -13,7 +14,7 @@ REQUEST_TIMEOUT = 30
 
 
 class LLMClient:
-  def __init__(self):
+  def __init__(self, token_tracker: TokenTracker):
     config = Config.get_instance()
     self.api_key = config.llm_api_key
     self.base_url = "https://api.openai.com/v1/chat/completions"
@@ -21,6 +22,7 @@ class LLMClient:
     self.max_tokens = config.llm_max_tokens
     self.temperature = config.llm_temperature
     self.system_prompt = config.llm_system_prompt
+    self.token_tracker = token_tracker
 
   def chat(self, messages: list) -> str:
     messages = [{"role": "system", "content": self.system_prompt}] + messages
@@ -48,6 +50,11 @@ class LLMClient:
           usage.get("prompt_tokens", 0),
           usage.get("completion_tokens", 0),
           usage.get("total_tokens", 0),
+        )
+        self.token_tracker.add(
+          "global",
+          usage.get("prompt_tokens", 0), 
+          usage.get("completion_tokens", 0)
         )
         return response.get("choices", [{}])[0].get("message", {}).get("content", "")
       except AuthenticationError:
