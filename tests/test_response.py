@@ -19,3 +19,8 @@ def test_response_to_bytes():
   assert b"Content-Length:" in b
   assert b'"message"' in b
   assert b'"Success"' in b
+
+def test_response_umlaut():
+  response = Response.ok({"message": "Schöne Grüße"})
+  b = response.to_bytes()
+  assert "Schöne Grüße".encode("utf-8") in b
