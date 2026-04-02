@@ -1,6 +1,6 @@
 # CloudMind
 
-CloudMind is a simple HTTP server that handles different routes and returns JSON responses. This project serves as a foundation for an extensible API server.
+CloudMind is a custom-built HTTP API server with integrated LLM capabilities (OpenAI). It manages users, chat sessions, and messages while providing token tracking with cost calculation. Built from scratch using raw TCP sockets without external web frameworks.
 
 ---
 ## Get Started
@@ -65,6 +65,14 @@ curl http://localhost:8080/sessions/1/messages
 # 12) Get db stats (GET /stats)
 curl http://localhost:8080/stats
 
+# 13) Send a message to the LLM (POST /chat)
+curl -X POST http://localhost:8080/chat \
+  -H "Content-Type: application/json" \
+  -d '{"session_id": 1, "message": "Was ist Cloud Computing?"}'
+
+# 14) Get current config (GET /config)
+curl http://localhost:8080/config
+
 ```
 
 ### Complete flow: User → Session → Messages → History
@@ -88,9 +96,15 @@ curl -X POST http://localhost:8080/sessions/1/messages \
   -d '{"content": "Hallo, CloudMind!"}'
 # → {"id": 1}
 
-# Step 4: Read the conversation history
+# Step 4: Chat with the LLM
+curl -X POST http://localhost:8080/chat \
+  -H "Content-Type: application/json" \
+  -d '{"session_id": 1, "message": "Hallo, CloudMind!"}'
+# → {"reply": "Hallo! Wie kann ich dir helfen?", "session_id": 1, "message_id": 2}
+
+# Step 5: Read the conversation history
 curl http://localhost:8080/sessions/1/messages
-# → [{"id": 1, "session_id": 1, "role": "user", "content": "Hallo, CloudMind!", "created_at": "..."}]
+# → [{"id": 1, "role": "user", "content": "Hallo, CloudMind!", ...}, {"id": 2, "role": "assistant", "content": "Hallo! Wie kann ich dir helfen?", ...}]
 ```
 
 ---
@@ -101,7 +115,7 @@ cloudmind/
 ├── scripts/
 │   ├── export_messages.py   # Script for messages export
 │   └── export.sh            # Cronjob script
-│ 
+│
 ├── src/
 │   ├── config/
 │   │   └── config.py        # Configuration class
@@ -109,30 +123,33 @@ cloudmind/
 │   ├── db/
 │   │   ├── exceptions.py    # Exception classes
 │   │   └── database.py      # Database class
-│   │ 
+│   │
 │   ├── llm/
 │   │   ├── exceptions.py    # Exception classes
-│   │   ├── llm_client.py    # LLM client class
-│   │   └── token_tracker.py # Token tracker class
-│   │ 
+│   │   ├── llm_client.py    # OpenAI API client with retry logic
+│   │   └── token_tracker.py # Token usage and cost tracking
+│   │
 │   ├── logging/
 │   │   └── logging_setup.py # Logging setup
-│   │ 
+│   │
 │   └── server/
 │       ├── controller/
+│       │   ├── chat.py      # LLM chat controller
 │       │   ├── message.py   # Message controller
 │       │   ├── session.py   # Session controller
 │       │   └── user.py      # User controller
-│       │ 
-│       ├── response.py      # HTTP response parser
+│       │
+│       ├── response.py      # HTTP response builder
 │       ├── request.py       # HTTP request parser
-│       ├── router.py        # Router-class
+│       ├── router.py        # Router with path parameters
 │       └── server.py        # Main HTTP server
-│ 
-├── tests/                   # Unit tests
+│
+├── tests/                   # Unit tests (pytest)
+├── data/                    # SQLite database (runtime)
+├── logs/                    # Log files (runtime)
 │
 ├── .env.example             # Example ENV
-├── config.example.xaml      # Example YAML
+├── config.example.yaml      # Example YAML config
 ├── requirements.txt         # Python dependencies
 ├── start.sh                 # Start script
 └── README.MD                # Project documentation
@@ -141,17 +158,19 @@ cloudmind/
 ---
 ## Features
 
-- Custom TCP socket server
-- HTTP/1.1 protocol support
-- JSON response handling
-- Dynamic route matching with path parameters ({id})
-- Request and response parsing (method, path, headers, body, query params)
-- Error handling with proper status codes
-- Unit tests with pytest
-- SQLite database integration
+- Custom TCP socket server with HTTP/1.1 protocol support
+- Dynamic route matching with path parameters (`{id}`)
+- Request/response parsing (method, path, headers, body, query params)
 - Controller pattern for route handlers
-- Structered logging
-- Start-script
+- SQLite database with users, sessions, and messages
+- LLM integration (OpenAI API) with conversation history
+- Token tracking with cost calculation (per-session and global)
+- Retry logic with exponential backoff for API calls
+- Configurable system prompt, model, temperature, and max tokens
+- YAML + `.env` configuration system with environment variable overrides
+- Structured logging with rotating file handler
+- Error handling with proper HTTP status codes
+- Unit tests with pytest
 - Message export via cronjob
 
 ---
@@ -174,7 +193,9 @@ Start the server (see Quick start above) and make requests to the endpoints list
 | `/sessions/{id}` | Get a specific session by ID | 200 / 404 | GET |
 | `/sessions/{id}/messages` | Add a message to a session (expects JSON with 'content') | 201 | POST |
 | `/sessions/{id}/messages` | Get all messages in a session (chronological) | 200 | GET |
-| `/stats` | Get db stats | 200 | GET |
+| `/chat` | Send a message to the LLM (expects JSON with 'session_id' and 'message') | 200 | POST |
+| `/stats` | Get database and token usage stats | 200 | GET |
+| `/config` | Get current server configuration | 200 | GET |
 | `/xyz` | All other routes - Not Found | 404 | * |
 
 ---
@@ -191,53 +212,23 @@ Start the server (see Quick start above) and make requests to the endpoints list
 python3 -m pytest tests/ -v
 ```
 
-### Request-Class tests
-
-```bash
-python3 -m pytest tests/test_request.py -v
-```
-
-### Response-Class tests
-
-```bash
-python3 -m pytest tests/test_response.py -v
-```
-
-### Router-Class tests
-
-```bash
-python3 -m pytest tests/test_router.py -v
-```
-
-### Database operations tests
-
-```bash
-python3 -m pytest tests/test_database.py -v
-```
-
-### Configuration system tests
-
-```bash
-python3 -m pytest tests/test_config.py -v
-```
-
-### Chat and LLM-MockUp  tests
+### Single test module
 
 ```bash
 python3 -m pytest tests/test_chat.py -v
 ```
 
-### Token tracker  tests
-
-```bash
-python3 -m pytest tests/test_token_tracker.py -v
-```
+Available test modules: `test_request`, `test_response`, `test_router`, `test_database`, `test_config`, `test_chat`, `test_token_tracker`
 
 ---
 ## Requirements
 
 - Python 3.10+
-- pytest for running tests
+- pytest >= 8.0.0
+- pandas >= 1.0.0
+- pyyaml
+- requests
+- python-dotenv
 
 ---
 ## License
