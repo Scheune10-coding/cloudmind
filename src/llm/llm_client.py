@@ -20,6 +20,7 @@ class LLMClient:
     self.base_url = "https://api.openai.com/v1/chat/completions"
     self.model = config.llm_model
     self.max_tokens = config.llm_max_tokens
+    self.context_max_tokens = config.llm_context_max_tokens
     self.temperature = config.llm_temperature
     self.system_prompt = config.llm_system_prompt
     self.token_tracker = token_tracker

@@ -19,6 +19,7 @@ class Config:
     self.llm_api_key = os.environ.get('LLM_API_KEY', data['llm']['api_key'])
     self.llm_model = os.environ.get('LLM_MODEL_NAME', data['llm']['model'])
     self.llm_max_tokens = int(os.environ.get('LLM_MAX_TOKENS', data['llm']['max_tokens']))
+    self.llm_context_max_tokens = int(os.environ.get('LLM_CONTEXT_MAX_TOKENS', data['llm']['context_max_tokens']))
     self.llm_temperature = float(os.environ.get('LLM_TEMPERATURE', data['llm']['temperature']))
     self.llm_system_prompt = os.environ.get('LLM_SYSTEM_PROMPT', data['llm']['system_prompt'])
 

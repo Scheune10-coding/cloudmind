@@ -4,6 +4,7 @@ from src.db.database import Database
 from src.llm.llm_client import LLMClient
 from src.server.request import Request
 from src.server.response import Response
+from src.llm.context_manager import trim_context
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +28,7 @@ class ChatController:
     user_message = {"role": "user", "content": request.json["message"]}
     llm_messages = [{"role": msg["role"], "content": msg["content"]} for msg in messages]
     llm_messages.append(user_message)
-    response_message = self.llm_client.chat(llm_messages)
+    response_message = self.llm_client.chat(trim_context(llm_messages, self.llm_client.context_max_tokens))
     if not response_message:
       return Response.error("LLM did not return a response")
 
