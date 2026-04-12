@@ -27,7 +27,7 @@ cd cloudmind
 ./start.sh
 ```
 
-On first run, `start.sh` will copy `config.example.yaml` to `config.yaml` and exit — edit `config.yaml` to adjust the model, system prompt, etc., then run `./start.sh` again.
+On first run, `start.sh` will copy `config.example.yaml` to `config.yaml`, `.env.example` to `.env` and exit — edit `config.yaml` to adjust the model, system prompt, etc., insert your API-key to `.env` and then run `./start.sh` again.
 
 ## Configuration
 
