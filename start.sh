@@ -8,6 +8,12 @@ fi
 source venv/bin/activate
 pip install -r requirements.txt -q
 
+if [ ! -f .env ]; then
+  cp .env.example .env
+  echo >&2 "Please edit .env with your settings and run the script again."
+  exit 1
+fi
+
 if [ ! -f "config.yaml" ]; then
   cp config.example.yaml config.yaml
   echo >&2 "Please edit config.yaml with your settings and run the script again."
