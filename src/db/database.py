@@ -39,6 +39,8 @@ class Database:
           created_at TEXT DEFAULT (datetime('now')),
           FOREIGN KEY (session_id) REFERENCES sessions(id)
       );
+                                  
+      ALTER TABLE sessions ADD COLUMN summary TEXT;
     ''')
 
   def create_user(self, name: str) -> int:
@@ -74,6 +76,11 @@ class Database:
     cursor = self.connection.execute('SELECT * FROM sessions WHERE user_id = ?', (user_id,))
     rows = cursor.fetchall()
     return [dict(row) for row in rows]
+  
+  def add_summary(self, session_id: int, summary: str):
+    cursor = self.connection.execute('UPDATE sessions SET summary = ? WHERE id = ?', (summary, session_id))
+    self.connection.commit()
+    return {"id": session_id}
   
   def add_message(self, session_id: int, role: str, content: str) -> dict:
     if role not in ['user', 'assistant']:

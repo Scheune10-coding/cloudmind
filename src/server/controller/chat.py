@@ -4,7 +4,7 @@ from src.db.database import Database
 from src.llm.llm_client import LLMClient
 from src.server.request import Request
 from src.server.response import Response
-from src.llm.context_manager import trim_context
+from src.llm.context_manager import count_tokens, trim_context, summarize_context
 
 logger = logging.getLogger(__name__)
 
@@ -24,10 +24,18 @@ class ChatController:
     if not session:
       return Response.not_found({"error": "Session not found"})
 
+    
     messages = self.database.get_messages(session_id)
     user_message = {"role": "user", "content": request.json["message"]}
     llm_messages = [{"role": msg["role"], "content": msg["content"]} for msg in messages]
+    if count_tokens(llm_messages) >= self.llm_client.context_max_tokens*0.8:
+      context_message = summarize_context(self.database.get_messages(session_id), self.llm_client)
+      self.database.add_summary(session_id, context_message["content"])
+    else:
+      context_message = None
     llm_messages.append(user_message)
+    if context_message:
+      llm_messages.insert(0, context_message)
     response_message = self.llm_client.chat(trim_context(llm_messages, self.llm_client.context_max_tokens))
     if not response_message:
       return Response.error("LLM did not return a response")

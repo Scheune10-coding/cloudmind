@@ -1,6 +1,7 @@
 import logging
 
 from src.config.config import Config
+from src.llm.llm_client import LLMClient
 
 logger = logging.getLogger(__name__)
 
@@ -21,11 +22,15 @@ def trim_context(messages: list, max_tokens: int) -> list:
       kept.insert(0, message)
       current_tokens += message_tokens
 
-  if kept and kept[0]["role"] != "user":
-      kept.insert(0, rest[-1])
-
   trimmed = len(rest) - len(kept)
   if trimmed > 0:
       logger.debug("Context trimmed from %d to %d messages", len(rest), len(kept))
 
   return system + kept
+
+def summarize_context(messages: list, llm_client: LLMClient) -> dict:
+  context = "\n".join([m["content"] for m in messages])
+  summarize_messages = {"role": "user", "content": f"Summarize the following conversation in less than 3 sentences:\n{context}"}
+  summary = llm_client.chat([summarize_messages])
+  response = {"role": "system", "content": f"Kontext: {summary}"}
+  return response
