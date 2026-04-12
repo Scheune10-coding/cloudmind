@@ -1,236 +1,189 @@
 # CloudMind
 
-CloudMind is a custom-built HTTP API server with integrated LLM capabilities (OpenAI). It manages users, chat sessions, and messages while providing token tracking with cost calculation. Built from scratch using raw TCP sockets without external web frameworks.
+A custom HTTP API server with integrated LLM capabilities, built from scratch using raw TCP sockets — no external web frameworks. Manages users, chat sessions, and messages with token tracking, cost calculation, and automatic context window management.
 
----
-## Get Started
+## Tech Stack
 
-### 1. Clone GitHub-Repo
+- **Language:** Python 3.10+
+- **Server:** Custom TCP socket server (HTTP/1.1, no framework)
+- **Database:** SQLite (via `sqlite3`)
+- **LLM:** OpenAI API (gpt-4o, configurable)
+- **Config:** YAML + `.env` with environment variable overrides
+- **Testing:** pytest
+
+## Prerequisites
+
+- Python 3.10+
+- An OpenAI API key
+
+## Setup
 
 ```bash
+# 1. Clone the repo
 git clone https://github.com/Scheune10-coding/cloudmind.git
 cd cloudmind
-```
 
-### 2. Start HTTP server
-
-```bash
+# 2. Start the server (handles venv, deps, config, and directories automatically)
 ./start.sh
 ```
 
-### Example requests
+On first run, `start.sh` will copy `config.example.yaml` to `config.yaml` and exit — edit `config.yaml` to adjust the model, system prompt, etc., then run `./start.sh` again.
 
-```bash
-# 1) Get welcome message (GET /)
-curl http://localhost:8080/
+## Configuration
 
-# 2) Check server health (GET /health)
-curl http://localhost:8080/health
+`config.yaml` controls all server behavior. Environment variables in `.env` take precedence.
 
-# 3) Echo JSON body (POST /echo)
-curl -X POST http://localhost:8080/echo \
-  -H "Content-Type: application/json" \
-  -d '{"message": "hello"}'
+```yaml
+server:
+  host: "localhost"
+  port: 8080
 
-# 4) Create a user (POST /users)
-curl -X POST http://localhost:8080/users \
-  -H "Content-Type: application/json" \
-  -d '{"name": "Alice"}'
+database:
+  path: "data/cloudmind.db"
 
-# 5) Get all users (GET /users)
-curl http://localhost:8080/users
+logging:
+  level: "INFO"
+  file: "logs/cloudmind.log"
 
-# 6) Get specific user by ID (GET /users/{id})
-curl http://localhost:8080/users/1
-
-# 7) Create a session (POST /sessions)
-curl -X POST http://localhost:8080/sessions \
-  -H "Content-Type: application/json" \
-  -d '{"user_id": 1, "title": "Meine erste Session"}'
-
-# 8) Get all sessions correlated to a specific user (GET /users/{id}/sessions)
-curl http://localhost:8080/users/1/sessions
-
-# 9) Get specific session by ID (GET /sessions/{id})
-curl http://localhost:8080/sessions/1
-
-# 10) Add a message to a session (POST /sessions/{id}/messages)
-curl -X POST http://localhost:8080/sessions/1/messages \
-  -H "Content-Type: application/json" \
-  -d '{"content": "Hallo, CloudMind!"}'
-
-# 11) Get all messages in a session (GET /sessions/{id}/messages)
-curl http://localhost:8080/sessions/1/messages
-
-# 12) Get db stats (GET /stats)
-curl http://localhost:8080/stats
-
-# 13) Send a message to the LLM (POST /chat)
-curl -X POST http://localhost:8080/chat \
-  -H "Content-Type: application/json" \
-  -d '{"session_id": 1, "message": "Was ist Cloud Computing?"}'
-
-# 14) Get current config (GET /config)
-curl http://localhost:8080/config
-
+llm:
+  model: "gpt-4o"
+  max_tokens: 1000
+  temperature: 0.7
+  system_prompt: "You are a helpful assistant."
 ```
 
-### Complete flow: User → Session → Messages → History
+Any `config.yaml` value can be overridden via environment variables in `.env`:
+
+```
+# Required
+LLM_API_KEY=sk-your-api-key-here
+
+# Optional overrides
+SERVER_HOST=localhost
+SERVER_PORT=8080
+DATABASE_PATH=data/cloudmind.db
+LOGGING_LEVEL=INFO
+LOGGING_FILE=logs/cloudmind.log
+LLM_MODEL_NAME=gpt-4o
+LLM_MAX_TOKENS=1000
+LLM_CONTEXT_MAX_TOKENS=4000
+LLM_TEMPERATURE=0.7
+LLM_SYSTEM_PROMPT=You are a helpful assistant.
+```
+
+## API Reference
+
+| Method | Route | Description | Status |
+|--------|-------|-------------|--------|
+| GET | `/` | Welcome message | 200 |
+| GET | `/health` | Health check + active model | 200 |
+| POST | `/echo` | Echo JSON body | 200 |
+| POST | `/users` | Create user `{"name": "..."}` | 201 |
+| GET | `/users` | List all users | 200 |
+| GET | `/users/{id}` | Get user by ID | 200 / 404 |
+| POST | `/sessions` | Create session `{"user_id": 1, "title": "..."}` | 201 |
+| GET | `/users/{id}/sessions` | List sessions for a user | 200 |
+| GET | `/sessions/{id}` | Get session by ID | 200 / 404 |
+| POST | `/sessions/{id}/messages` | Add message `{"content": "..."}` | 201 |
+| GET | `/sessions/{id}/messages` | Get all messages (chronological) | 200 |
+| POST | `/chat` | Chat with LLM `{"session_id": 1, "message": "..."}` | 200 |
+| GET | `/stats` | DB and token usage stats | 200 |
+| GET | `/config` | Current server configuration | 200 |
+
+## Example Flow
 
 ```bash
-# Step 1: Create a user
+# Create a user
 curl -X POST http://localhost:8080/users \
   -H "Content-Type: application/json" \
   -d '{"name": "Leon"}'
 # → {"id": 1}
 
-# Step 2: Create a session for that user
+# Create a session
 curl -X POST http://localhost:8080/sessions \
   -H "Content-Type: application/json" \
-  -d '{"user_id": 1, "title": "Erster Chat"}'
+  -d '{"user_id": 1, "title": "First Chat"}'
 # → {"id": 1}
 
-# Step 3: Add a message to the session
-curl -X POST http://localhost:8080/sessions/1/messages \
-  -H "Content-Type: application/json" \
-  -d '{"content": "Hallo, CloudMind!"}'
-# → {"id": 1}
-
-# Step 4: Chat with the LLM
+# Chat with the LLM
 curl -X POST http://localhost:8080/chat \
   -H "Content-Type: application/json" \
-  -d '{"session_id": 1, "message": "Hallo, CloudMind!"}'
-# → {"reply": "Hallo! Wie kann ich dir helfen?", "session_id": 1, "message_id": 2}
+  -d '{"session_id": 1, "message": "What is cloud computing?"}'
+# → {"reply": "...", "session_id": 1, "message_id": 2}
 
-# Step 5: Read the conversation history
+# Read conversation history
 curl http://localhost:8080/sessions/1/messages
-# → [{"id": 1, "role": "user", "content": "Hallo, CloudMind!", ...}, {"id": 2, "role": "assistant", "content": "Hallo! Wie kann ich dir helfen?", ...}]
 ```
 
----
-## Project Structure
+## Architecture
 
 ```
 cloudmind/
 ├── scripts/
-│   ├── export_messages.py   # Script for messages export
-│   └── export.sh            # Cronjob script
+│   ├── export_messages.py   # Message export script
+│   └── export.sh            # Cronjob wrapper
 │
 ├── src/
 │   ├── config/
-│   │   └── config.py        # Configuration class
+│   │   └── config.py        # Singleton config (YAML + env)
 │   │
 │   ├── db/
-│   │   ├── exceptions.py    # Exception classes
-│   │   └── database.py      # Database class
+│   │   ├── database.py      # SQLite database layer
+│   │   └── exceptions.py    # DB exception types
 │   │
 │   ├── llm/
-│   │   ├── exceptions.py    # Exception classes
-│   │   ├── llm_client.py    # OpenAI API client with retry logic
-│   │   └── token_tracker.py # Token usage and cost tracking
+│   │   ├── llm_client.py    # OpenAI API client (retry + backoff)
+│   │   ├── token_tracker.py # Token usage and cost tracking
+│   │   ├── context_manager.py # Context trimming and summarization
+│   │   └── exceptions.py    # LLM exception types
 │   │
 │   ├── logging/
-│   │   └── logging_setup.py # Logging setup
+│   │   └── logging_setup.py # Rotating file handler setup
 │   │
 │   └── server/
-│       ├── controller/
-│       │   ├── chat.py      # LLM chat controller
-│       │   ├── message.py   # Message controller
-│       │   ├── session.py   # Session controller
-│       │   └── user.py      # User controller
-│       │
-│       ├── response.py      # HTTP response builder
+│       ├── server.py        # TCP socket server (main loop, routing, DI)
 │       ├── request.py       # HTTP request parser
-│       ├── router.py        # Router with path parameters
-│       └── server.py        # Main HTTP server
+│       ├── response.py      # HTTP response builder
+│       ├── router.py        # Dynamic route matching with {id} params
+│       └── controller/
+│           ├── chat.py      # LLM chat handler
+│           ├── message.py   # Message CRUD
+│           ├── session.py   # Session CRUD
+│           └── user.py      # User CRUD
 │
-├── tests/                   # Unit tests (pytest)
-├── data/                    # SQLite database (runtime)
-├── logs/                    # Log files (runtime)
-│
-├── .env.example             # Example ENV
-├── config.example.yaml      # Example YAML config
+├── tests/                   # pytest unit tests
+├── data/                    # SQLite database (runtime, git-ignored)
+├── logs/                    # Log files (runtime, git-ignored)
+├── .env.example             # Environment variable template
+├── config.example.yaml      # Config template
 ├── requirements.txt         # Python dependencies
-├── start.sh                 # Start script
-└── README.MD                # Project documentation
+└── start.sh                 # Server start script
 ```
 
----
-## Features
+### Context Window Management
 
-- Custom TCP socket server with HTTP/1.1 protocol support
-- Dynamic route matching with path parameters (`{id}`)
-- Request/response parsing (method, path, headers, body, query params)
-- Controller pattern for route handlers
-- SQLite database with users, sessions, and messages
-- LLM integration (OpenAI API) with conversation history
-- Token tracking with cost calculation (per-session and global)
-- Retry logic with exponential backoff for API calls
-- Configurable system prompt, model, temperature, and max tokens
-- YAML + `.env` configuration system with environment variable overrides
-- Structured logging with rotating file handler
-- Error handling with proper HTTP status codes
-- Unit tests with pytest
-- Message export via cronjob
+When a session's conversation history grows too large, the context manager automatically:
 
----
-## How to use the server
+1. **Trims** old messages from the front, keeping recent history within the token budget
+2. **Summarizes** trimmed context using the LLM and injects the summary as a system message
 
-Start the server (see Quick start above) and make requests to the endpoints listed below.
+This prevents token overflow without losing conversational continuity.
 
-**Routes:**
-
-| Route | Description | Status Code | Method |
-|-------|-------------|-------------|--------|
-| `/` | Main route - Welcome message | 200 | GET |
-| `/health` | Health check endpoint and llm_model | 200 | GET |
-| `/echo` | Echo endpoint - Returns JSON body | 200 | POST |
-| `/users` | Create a new user (expects JSON with 'name') | 201 | POST |
-| `/users` | Get a list of all users | 200 | GET |
-| `/users/{id}` | Get a specific user by ID | 200 / 404 | GET |
-| `/sessions` | Create a new session (expects JSON with 'user_id' and 'title') | 201 | POST |
-| `/users/{id}/sessions` | Get a list of all sessions for a specific user | 200 | GET |
-| `/sessions/{id}` | Get a specific session by ID | 200 / 404 | GET |
-| `/sessions/{id}/messages` | Add a message to a session (expects JSON with 'content') | 201 | POST |
-| `/sessions/{id}/messages` | Get all messages in a session (chronological) | 200 | GET |
-| `/chat` | Send a message to the LLM (expects JSON with 'session_id' and 'message') | 200 | POST |
-| `/stats` | Get database and token usage stats | 200 | GET |
-| `/config` | Get current server configuration | 200 | GET |
-| `/xyz` | All other routes - Not Found | 404 | * |
-
----
 ## Running Tests
 
-> **Note:** Make sure your virtual environment is activated before running the tests so that `pytest` is available.
-> ```bash
-> source venv/bin/activate
-> ```
-
-### All tests
-
 ```bash
+# Activate virtual environment first
+source venv/bin/activate
+
+# Run all tests
 python3 -m pytest tests/ -v
-```
 
-### Single test module
-
-```bash
+# Run a specific module
 python3 -m pytest tests/test_chat.py -v
 ```
 
 Available test modules: `test_request`, `test_response`, `test_router`, `test_database`, `test_config`, `test_chat`, `test_token_tracker`
 
----
-## Requirements
-
-- Python 3.10+
-- pytest >= 8.0.0
-- pandas >= 1.0.0
-- pyyaml
-- requests
-- python-dotenv
-
----
 ## License
 
-This project is open source and available for educational purposes.
+Open source — available for educational purposes.
