@@ -120,44 +120,44 @@ curl http://localhost:8080/sessions/1/messages
 ```
 cloudmind/
 ├── scripts/
-│   ├── export_messages.py   # Message export script
-│   └── export.sh            # Cronjob wrapper
+│   ├── export_messages.py     # Message export script
+│   └── export.sh              # Cronjob wrapper
 │
 ├── src/
 │   ├── config/
-│   │   └── config.py        # Singleton config (YAML + env)
+│   │   └── config.py          # Singleton config (YAML + env)
 │   │
 │   ├── db/
-│   │   ├── database.py      # SQLite database layer
-│   │   └── exceptions.py    # DB exception types
+│   │   ├── database.py        # SQLite database layer
+│   │   └── exceptions.py      # DB exception types
 │   │
 │   ├── llm/
-│   │   ├── llm_client.py    # OpenAI API client (retry + backoff)
-│   │   ├── token_tracker.py # Token usage and cost tracking
+│   │   ├── llm_client.py      # OpenAI API client (retry + backoff)
+│   │   ├── token_tracker.py   # Token usage and cost tracking
 │   │   ├── context_manager.py # Context trimming and summarization
-│   │   └── exceptions.py    # LLM exception types
+│   │   └── exceptions.py      # LLM exception types
 │   │
 │   ├── logging/
-│   │   └── logging_setup.py # Rotating file handler setup
+│   │   └── logging_setup.py   # Rotating file handler setup
 │   │
 │   └── server/
-│       ├── server.py        # TCP socket server (main loop, routing, DI)
-│       ├── request.py       # HTTP request parser
-│       ├── response.py      # HTTP response builder
-│       ├── router.py        # Dynamic route matching with {id} params
+│       ├── server.py          # TCP socket server (main loop, routing, DI)
+│       ├── request.py         # HTTP request parser
+│       ├── response.py        # HTTP response builder
+│       ├── router.py          # Dynamic route matching with {id} params
 │       └── controller/
-│           ├── chat.py      # LLM chat handler
-│           ├── message.py   # Message CRUD
-│           ├── session.py   # Session CRUD
-│           └── user.py      # User CRUD
+│           ├── chat.py        # LLM chat handler
+│           ├── message.py     # Message CRUD
+│           ├── session.py     # Session CRUD
+│           └── user.py        # User CRUD
 │
-├── tests/                   # pytest unit tests
-├── data/                    # SQLite database (runtime, git-ignored)
-├── logs/                    # Log files (runtime, git-ignored)
-├── .env.example             # Environment variable template
-├── config.example.yaml      # Config template
-├── requirements.txt         # Python dependencies
-└── start.sh                 # Server start script
+├── tests/                     # pytest unit tests
+├── data/                      # SQLite database (runtime, git-ignored)
+├── logs/                      # Log files (runtime, git-ignored)
+├── .env.example               # Environment variable template
+├── config.example.yaml        # Config template
+├── requirements.txt           # Python dependencies
+└── start.sh                   # Server start script
 ```
 
 ### Context Window Management
