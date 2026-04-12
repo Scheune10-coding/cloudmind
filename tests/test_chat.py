@@ -2,73 +2,89 @@ import pytest
 from unittest.mock import MagicMock
 from src.db.database import Database
 from src.server.controller.chat import ChatController
-
+from src.llm.context_manager import count_tokens, trim_context
 
 @pytest.fixture
 def db(tmp_path):
-    return Database(str(tmp_path / "test.db"))
+  return Database(str(tmp_path / "test.db"))
 
 
 @pytest.fixture
 def session(db):
-    user_id = db.create_user("Test User")
-    return db.create_session(user_id, "Test Session")
+  user_id = db.create_user("Test User")
+  return db.create_session(user_id, "Test Session")
 
 
 @pytest.fixture
 def controller(db):
-    mock_llm = MagicMock()
-    mock_llm.chat.return_value = "Ich bin CloudMind"
-    return ChatController(db, mock_llm)
+  mock_llm = MagicMock()
+  mock_llm.chat.return_value = "Ich bin CloudMind"
+  mock_llm.context_max_tokens = 3000
+  return ChatController(db, mock_llm)
 
 
 def test_chat_missing_message_field(controller):
-    request = MagicMock()
-    request.json = {"session_id": 1}
-    response = controller.create(request)
-    assert response.status == 400
+  request = MagicMock()
+  request.json = {"session_id": 1}
+  response = controller.create(request)
+  assert response.status == 400
 
 
 def test_chat_missing_session_id(controller):
-    request = MagicMock()
-    request.json = {"message": "Hallo"}
-    response = controller.create(request)
-    assert response.status == 400
+  request = MagicMock()
+  request.json = {"message": "Hallo"}
+  response = controller.create(request)
+  assert response.status == 400
 
 
 def test_chat_session_not_found(controller):
-    request = MagicMock()
-    request.json = {"session_id": 999, "message": "Hallo"}
-    response = controller.create(request)
-    assert response.status == 404
+  request = MagicMock()
+  request.json = {"session_id": 999, "message": "Hallo"}
+  response = controller.create(request)
+  assert response.status == 404
 
 
 def test_chat_saves_both_messages(db, session, controller):
-    request = MagicMock()
-    request.json = {"session_id": session["id"], "message": "Wer bist du?"}
-    controller.create(request)
-    messages = db.get_messages(session["id"])
-    assert len(messages) == 2
-    assert messages[0]["role"] == "user"
-    assert messages[0]["content"] == "Wer bist du?"
-    assert messages[1]["role"] == "assistant"
-    assert messages[1]["content"] == "Ich bin CloudMind"
+  request = MagicMock()
+  request.json = {"session_id": session["id"], "message": "Wer bist du?"}
+  controller.create(request)
+  messages = db.get_messages(session["id"])
+  assert len(messages) == 2
+  assert messages[0]["role"] == "user"
+  assert messages[0]["content"] == "Wer bist du?"
+  assert messages[1]["role"] == "assistant"
+  assert messages[1]["content"] == "Ich bin CloudMind"
 
 
 def test_chat_llm_called_with_correct_message(db, session):
-    mock_llm = MagicMock()
-    mock_llm.chat.return_value = "Antwort"
-    controller = ChatController(db, mock_llm)
-    request = MagicMock()
-    request.json = {"session_id": session["id"], "message": "Test"}
-    controller.create(request)
-    mock_llm.chat.assert_called_once_with([{"role": "user", "content": "Test"}])
+  mock_llm = MagicMock()
+  mock_llm.chat.return_value = "Antwort"
+  mock_llm.context_max_tokens = 3000
+  controller = ChatController(db, mock_llm)
+  request = MagicMock()
+  request.json = {"session_id": session["id"], "message": "Test"}
+  controller.create(request)
+  mock_llm.chat.assert_called_once_with([{"role": "user", "content": "Test"}])
 
 
 def test_chat_no_api_call_on_invalid_request(db):
-    mock_llm = MagicMock()
-    controller = ChatController(db, mock_llm)
-    request = MagicMock()
-    request.json = {}
-    controller.create(request)
-    mock_llm.chat.assert_not_called()
+  mock_llm = MagicMock()
+  controller = ChatController(db, mock_llm)
+  request = MagicMock()
+  request.json = {}
+  controller.create(request)
+  mock_llm.chat.assert_not_called()
+
+def test_count_tokens():
+  messages = [{"role": "user", "content": "1234"}]
+  assert count_tokens(messages) == 1
+
+def test_trim_context_keeps_newest_messages():
+  messages = [
+    {"role": "user", "content": "A" * 400},
+    {"role": "assistant", "content": "B" * 400},
+    {"role": "user", "content": "C" * 400},
+  ]
+  result = trim_context(messages, max_tokens=250)
+  assert len(result) == 2
+  assert result[-1]["content"] == "C" * 400
