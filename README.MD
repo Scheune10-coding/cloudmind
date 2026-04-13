@@ -9,6 +9,7 @@ A custom HTTP API server with integrated LLM capabilities, built from scratch us
 - **Database:** SQLite (via `sqlite3`)
 - **LLM:** OpenAI API (gpt-4o, configurable)
 - **Config:** YAML + `.env` with environment variable overrides
+- **Analytics:** pandas (used for message statistics in `/stats`)
 - **Testing:** pytest
 
 ## Prerequisites
@@ -75,7 +76,7 @@ LLM_SYSTEM_PROMPT=You are a helpful assistant.
 
 | Method | Route | Description | Status |
 |--------|-------|-------------|--------|
-| GET | `/` | Welcome message | 200 |
+| GET | `/` | Web UI (serves `static/index.html`) | 200 |
 | GET | `/health` | Health check + active model | 200 |
 | POST | `/echo` | Echo JSON body | 200 |
 | POST | `/users` | Create user `{"name": "..."}` | 201 |
@@ -87,8 +88,9 @@ LLM_SYSTEM_PROMPT=You are a helpful assistant.
 | POST | `/sessions/{id}/messages` | Add message `{"content": "..."}` | 201 |
 | GET | `/sessions/{id}/messages` | Get all messages (chronological) | 200 |
 | POST | `/chat` | Chat with LLM `{"session_id": 1, "message": "..."}` | 200 |
-| GET | `/stats` | DB and token usage stats | 200 |
+| GET | `/stats` | DB and token usage stats (users, sessions, messages, per-role counts, timestamps) | 200 |
 | GET | `/config` | Current server configuration | 200 |
+| OPTIONS | `*` | CORS preflight — responds with allowed methods and headers | 200 |
 
 ## Example Flow
 
@@ -128,7 +130,7 @@ cloudmind/
 │   │   └── config.py          # Singleton config (YAML + env)
 │   │
 │   ├── db/
-│   │   ├── database.py        # SQLite database layer
+│   │   ├── database.py        # SQLite database layer (users, sessions, messages, summaries)
 │   │   └── exceptions.py      # DB exception types
 │   │
 │   ├── llm/
@@ -143,13 +145,16 @@ cloudmind/
 │   └── server/
 │       ├── server.py          # TCP socket server (main loop, routing, DI)
 │       ├── request.py         # HTTP request parser
-│       ├── response.py        # HTTP response builder
-│       ├── router.py          # Dynamic route matching with {id} params
+│       ├── response.py        # HTTP response builder (JSON + HTML, CORS headers)
+│       ├── router.py          # Dynamic route matching with {id} params + OPTIONS handling
 │       └── controller/
 │           ├── chat.py        # LLM chat handler
 │           ├── message.py     # Message CRUD
 │           ├── session.py     # Session CRUD
 │           └── user.py        # User CRUD
+│
+├── static/
+│   └── index.html             # Web UI (chat interface served at GET /)
 │
 ├── tests/                     # pytest unit tests
 ├── data/                      # SQLite database (runtime, git-ignored)
@@ -160,12 +165,18 @@ cloudmind/
 └── start.sh                   # Server start script
 ```
 
+### Web UI
+
+A minimal chat interface is served at `GET /`. It talks directly to the API (`/users`, `/sessions`, `/chat`) via `fetch` in the browser. No build step required — it's a single self-contained HTML file.
+
 ### Context Window Management
 
 When a session's conversation history grows too large, the context manager automatically:
 
 1. **Trims** old messages from the front, keeping recent history within the token budget
 2. **Summarizes** trimmed context using the LLM and injects the summary as a system message
+
+The summary is persisted in the `sessions.summary` column so it survives server restarts.
 
 This prevents token overflow without losing conversational continuity.
 
