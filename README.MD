@@ -169,6 +169,8 @@ cloudmind/
 
 A minimal chat interface is served at `GET /`. It talks directly to the API (`/users`, `/sessions`, `/chat`) via `fetch` in the browser. No build step required — it's a single self-contained HTML file.
 
+Once the server is running, open your browser at [http://localhost:8080](http://localhost:8080).
+
 ### Context Window Management
 
 When a session's conversation history grows too large, the context manager automatically:
