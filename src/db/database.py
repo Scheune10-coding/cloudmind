@@ -40,8 +40,13 @@ class Database:
           FOREIGN KEY (session_id) REFERENCES sessions(id)
       );
                                   
-      ALTER TABLE sessions ADD COLUMN summary TEXT;
     ''')
+
+    try:
+      self.connection.execute('ALTER TABLE sessions ADD COLUMN summary TEXT')
+      self.connection.commit()
+    except sqlite3.OperationalError:
+      pass
 
   def create_user(self, name: str) -> int:
     cursor = self.connection.execute('INSERT INTO users (name) VALUES (?)', (name,))

@@ -14,6 +14,11 @@ class Router:
     self.paths.add(path)
 
   def dispatch(self, request: Request) -> Response:
+    if request.method == 'OPTIONS':
+      return Response(200, {}, {
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type'
+      })
     handler = self.routes.get(f"{request.method}:{request.path}")
     if handler:
       return handler(request)

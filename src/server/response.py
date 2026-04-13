@@ -22,9 +22,14 @@ class Response:
     self.extra_headers = headers or {}
 
   def to_bytes (self) -> bytes:
-    body_bytes = json.dumps(self.body, ensure_ascii=False).encode('utf-8')
+    if isinstance(self.body, str):
+      body_bytes = self.body.encode('utf-8')
+      content_type = 'text/html; charset=utf-8'
+    else:
+      body_bytes = json.dumps(self.body, ensure_ascii=False).encode('utf-8')
+      content_type = 'application/json'
     status_line = f'HTTP/1.1 {self.status} {STATUS[self.status]}\r\n'
-    headers = f'Content-Type: application/json\r\nContent-Length: {len(body_bytes)}\r\n'
+    headers = f'Content-Type: {content_type}\r\nContent-Length: {len(body_bytes)}\r\nAccess-Control-Allow-Origin: *\r\n'
     if self.extra_headers:
       headers += ''.join(f'{key}: {value}\r\n' for key, value in self.extra_headers.items())
     headers += '\r\n'
@@ -53,3 +58,7 @@ class Response:
   @classmethod
   def error (cls, message: str) -> 'Response':
     return cls(500, {"error": message})
+
+  @classmethod
+  def html(cls, content: str) -> 'Response':
+    return cls(200, content)

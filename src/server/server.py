@@ -19,7 +19,7 @@ from src.llm.token_tracker import TokenTracker
 
 logger = logging.getLogger(__name__)
 
-RECV_BUFFER_SIZE = 1024
+RECV_BUFFER_SIZE = 65536
 LISTEN_BACKLOG = 5
 
 router = Router()
@@ -40,7 +40,8 @@ def health_handler(request: Request) -> Response:
 
 
 def home_handler(request: Request) -> Response:
-  return Response.ok({"message": "Welcome to CloudMind"})
+  with open('static/index.html', 'r', encoding='utf-8') as f:
+    return Response.html(f.read())
 
 
 def echo_handler(request: Request) -> Response:
