@@ -571,6 +571,12 @@
       <span class="status-label" id="status-label">Connecting...</span>
     </div>
 
+    <button onclick="newConversation()" class="header-link" aria-label="Neues Gespräch">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+      </svg>
+    </button>
+
     <div class="header-actions">
       <a
         href="http://localhost:8080/stats"
@@ -659,7 +665,7 @@
        A — CONSTANTS
     ============================================================ */
     const API_BASE  = 'http://localhost:8080';
-    const SESSION_ID = 1;
+    let currentSessionId = null;
 
     /* ============================================================
        B — API STUBS  (implement these to connect to the server)
@@ -686,21 +692,57 @@
      * Create a new user.
      * @returns {Promise<{id: number, name: string, created_at: string}>}
      */
-    async function createUser() { /* stub */ }
+    async function createUser() {
+      const response = await fetch(`${API_BASE}/users`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ name: `User-${Date.now()}` })
+      });
+      return response.json();
+    }
 
     /**
      * Create a new session for a user.
      * @param {number} userId
      * @returns {Promise<{id: number}>}
      */
-    async function createSession(userId) { /* stub */ }
+    async function createSession(userId) {
+      const response = await fetch(`${API_BASE}/sessions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ user_id: userId })
+      });
+      return response.json();
+    }
 
     /**
      * Load all messages for a session in chronological order.
      * @param {number} sessionId
      * @returns {Promise<Array<{id: number, session_id: number, role: string, content: string, created_at: string}>>}
      */
-    async function loadHistory(sessionId) { /* stub */ }
+    async function loadHistory(sessionId) {
+      const response = await fetch(`${API_BASE}/sessions/${sessionId}/messages`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      return response.json();
+    }
+
+    async function newConversation() {
+      const session = await createSession(localStorage.getItem('user_id'));
+      localStorage.setItem('session_id', session.id);
+      currentSessionId = parseInt(session.id);
+      messageList.innerHTML = '';
+      emptyState.classList.remove('hidden');
+      emptyState.setAttribute('aria-hidden', 'false');
+      inputField.focus();
+    }
 
     /* ============================================================
        C — DOM REFERENCES + STATE
@@ -841,7 +883,7 @@
       setLoading(true);
 
       try {
-        const result = await sendMessage(SESSION_ID, text);
+        const result = await sendMessage(currentSessionId, text);
         appendMessage('assistant', result.reply);
       } catch (err) {
         showError('Failed to send message. Is the server running?');
@@ -872,7 +914,16 @@
 
     async function init() {
       try {
-        const messages = await loadHistory(SESSION_ID);
+        if (!localStorage.getItem('user_id')) {
+          const user = await createUser();
+          localStorage.setItem('user_id', user.id);
+        }
+        if (!localStorage.getItem('session_id')) {
+          const session = await createSession(localStorage.getItem('user_id'));
+          localStorage.setItem('session_id', session.id);
+        }
+        currentSessionId = parseInt(localStorage.getItem('session_id'));
+        const messages = await loadHistory(currentSessionId);
         if (messages && messages.length > 0) {
           renderHistory(messages);
         }

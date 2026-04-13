@@ -19,7 +19,7 @@ class SessionController:
       return Response.bad_request({"error": "Missing user_id"})
     if not title:
       logger.warning("create_session: missing title")
-      return Response.bad_request({"error": "Missing title"})
+      title = "New Conversation"
     try:
       session = self.database.create_session(user_id, title)
     except ValueError:
